@@ -8,33 +8,23 @@ import (
 
 func Test_transfer(t *testing.T) {
 	// given
-	buffer := make([]byte, 10)
+	buffer := bytes.NewBuffer(make([]byte, 0, 10))
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedOffset := 10
-	expectedBuffered := 0
-
-	expectedBuffer := make([]byte, 10)
-	copy(expectedBuffer, "ree four f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1014))
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteString("one two three four f")
 
 	// when
-	offset, buffered, err := transfer(reader, writer, buffer, 0, 0, 20)
+	err := transfer(reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
 	}
-	if offset != expectedOffset {
-		t.Error(offset, expectedOffset)
-	}
-	if buffered != expectedBuffered {
-		t.Error(buffered, expectedBuffered)
-	}
-	if !bytes.Equal(buffer, expectedBuffer) {
+	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
 		t.Error(buffer, expectedBuffer)
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
@@ -44,35 +34,27 @@ func Test_transfer(t *testing.T) {
 
 func Test_transfer_offset(t *testing.T) {
 	// given
-	buffer := make([]byte, 10)
-	buffer[0] = 1
-	buffer[1] = 2
+	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+
+	_, _ = buffer.ReadByte()
+	_, _ = buffer.ReadByte()
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedOffset := 5
-	expectedBuffered := 5
-
-	expectedBuffer := make([]byte, 10)
-	copy(expectedBuffer, "ree four f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1019))
+	expectedBuffer.WriteString("our f")
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteString("one two three f")
 
 	// when
-	offset, buffered, err := transfer(reader, writer, buffer, 2, 0, 15)
+	err := transfer(reader, writer, buffer, 15)
 	// then
 	if err != nil {
 		t.Error(err)
 	}
-	if offset != expectedOffset {
-		t.Error(offset, expectedOffset)
-	}
-	if buffered != expectedBuffered {
-		t.Error(buffered, expectedBuffered)
-	}
-	if !bytes.Equal(buffer, expectedBuffer) {
+	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
 		t.Error(buffer, expectedBuffer)
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
@@ -82,37 +64,26 @@ func Test_transfer_offset(t *testing.T) {
 
 func Test_transfer_buffered(t *testing.T) {
 	// given
-	buffer := make([]byte, 10)
-	buffer[0] = 1
-	buffer[1] = 2
+	buffer := bytes.NewBuffer(make([]byte, 2, 10))
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedOffset := 8
-	expectedBuffered := 2
-
-	expectedBuffer := make([]byte, 10)
-	copy(expectedBuffer, "ree four f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1016))
+	expectedBuffer.WriteString(" f")
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedWriter.WriteByte(1)
-	expectedWriter.WriteByte(2)
+	expectedWriter.WriteByte(0)
+	expectedWriter.WriteByte(0)
 	expectedWriter.WriteString("one two three four")
 
 	// when
-	offset, buffered, err := transfer(reader, writer, buffer, 0, 2, 20)
+	err := transfer(reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
 	}
-	if offset != expectedOffset {
-		t.Error(offset, expectedOffset)
-	}
-	if buffered != expectedBuffered {
-		t.Error(buffered, expectedBuffered)
-	}
-	if !bytes.Equal(buffer, expectedBuffer) {
+	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
 		t.Error(buffer, expectedBuffer)
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
@@ -122,36 +93,27 @@ func Test_transfer_buffered(t *testing.T) {
 
 func Test_transfer_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	// given
-	buffer := make([]byte, 10)
-	buffer[0] = 1
-	buffer[1] = 2
+	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+
+	_, _ = buffer.ReadByte()
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedOffset := 4
-	expectedBuffered := 6
-
-	expectedBuffer := make([]byte, 10)
-	copy(expectedBuffer, "one two th")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1021))
+	expectedBuffer.WriteString("two th")
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedWriter.WriteByte(2)
+	expectedWriter.WriteByte(0)
 	expectedWriter.WriteString("one ")
 
 	// when
-	offset, buffered, err := transfer(reader, writer, buffer, 1, 1, 5)
+	err := transfer(reader, writer, buffer, 5)
 	// then
 	if err != nil {
 		t.Error(err)
 	}
-	if offset != expectedOffset {
-		t.Error(offset, expectedOffset)
-	}
-	if buffered != expectedBuffered {
-		t.Error(buffered, expectedBuffered)
-	}
-	if !bytes.Equal(buffer, expectedBuffer) {
+	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
 		t.Error(buffer, expectedBuffer)
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
@@ -161,36 +123,27 @@ func Test_transfer_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 
 func Test_transfer_offsetAndBuffered(t *testing.T) {
 	// given
-	buffer := make([]byte, 10)
-	buffer[0] = 1
-	buffer[1] = 2
+	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+
+	_, _ = buffer.ReadByte()
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedOffset := 9
-	expectedBuffered := 1
-
-	expectedBuffer := make([]byte, 10)
-	copy(expectedBuffer, "ree four f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1015))
+	expectedBuffer.WriteString("f")
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedWriter.WriteByte(2)
+	expectedWriter.WriteByte(0)
 	expectedWriter.WriteString("one two three four ")
 
 	// when
-	offset, buffered, err := transfer(reader, writer, buffer, 1, 1, 20)
+	err := transfer(reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
 	}
-	if offset != expectedOffset {
-		t.Error(offset, expectedOffset)
-	}
-	if buffered != expectedBuffered {
-		t.Error(buffered, expectedBuffered)
-	}
-	if !bytes.Equal(buffer, expectedBuffer) {
+	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
 		t.Error(buffer, expectedBuffer)
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
