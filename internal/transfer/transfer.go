@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"bytes"
 	"io"
 )
 
@@ -35,4 +36,32 @@ func transfer(
 		buffered = n
 	}
 	return offset, buffered, nil
+}
+
+func transferWithBuffer(
+	reader io.Reader,
+	writer io.Writer,
+	buffer bytes.Buffer,
+	toTransfer int,
+) error {
+	limitedReader := io.LimitedReader{R: reader, N: int64(buffer.Cap())}
+	written := int64(0)
+	for {
+		if len(buffer.Bytes()) > 0 {
+			n, err := buffer.WriteTo(writer)
+			if err != nil {
+				panic(err)
+			}
+			written += n
+			if written == int64(toTransfer) {
+				break
+			}
+			buffer.Reset()
+		}
+		copiedLimitedReader := limitedReader
+		if _, err := buffer.ReadFrom(&copiedLimitedReader); err != nil {
+			panic(err)
+		}
+	}
+	return nil
 }
