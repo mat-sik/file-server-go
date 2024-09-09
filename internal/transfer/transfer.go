@@ -11,7 +11,7 @@ func transfer(
 	buffer *bytes.Buffer,
 	toTransfer int,
 ) error {
-	limitedReader := io.LimitedReader{R: reader, N: int64(buffer.Cap())}
+	bufferCapacity := int64(buffer.Cap())
 	written := 0
 	for {
 		buffered := len(buffer.Bytes())
@@ -27,8 +27,8 @@ func transfer(
 			}
 			buffer.Reset()
 		}
-		copiedLimitedReader := limitedReader
-		if _, err := buffer.ReadFrom(&copiedLimitedReader); err != nil {
+		limitedReader := io.LimitReader(reader, bufferCapacity)
+		if _, err := buffer.ReadFrom(limitedReader); err != nil {
 			panic(err)
 		}
 	}
