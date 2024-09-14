@@ -55,12 +55,12 @@ func receiveMessage(
 	}
 	decoder := gob.NewDecoder(buffer)
 
-	var message message.Holder
-	if err := decoder.Decode(&message); err != nil {
+	var holder message.Holder
+	if err := decoder.Decode(&holder); err != nil {
 		return nil, err
 	}
 
-	return &message, nil
+	return &holder, nil
 }
 
 func ensureBufferHasSpace(buffer *bytes.Buffer, toRead uint32) error {
