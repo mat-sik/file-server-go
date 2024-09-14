@@ -69,8 +69,8 @@ func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {
 	if size+buffered > bufferCapacity {
 		return ErrTooBigMessage
 	}
-	availableSize := uint32(buffer.Available())
-	if availableSize < size {
+	availableSpace := uint32(buffer.Available())
+	if availableSpace < size {
 		if err := compact(buffer); err != nil {
 			return err
 		}
