@@ -20,12 +20,12 @@ const (
 	DeleteFileResponseType TypeName = "DeleteFileRes"
 )
 
-func ExtractType[T any](holder Holder) (*T, error) {
+func ExtractType[T any](holder Holder) (T, error) {
 	payload, ok := holder.PayloadStruct.(T)
 	if !ok {
-		return nil, ErrFailedExtraction
+		return payload, ErrFailedExtraction
 	}
-	return &payload, nil
+	return payload, nil
 }
 
 type GetFileRequest struct {

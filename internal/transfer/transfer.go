@@ -41,26 +41,26 @@ func transfer(
 func receiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
-) (*message.Holder, error) {
+) (message.Holder, error) {
 	buffered := len(buffer.Bytes())
 	if buffered < messageSizeByteAmount {
 		if _, err := io.ReadAtLeast(reader, buffer.Bytes(), messageSizeByteAmount); err != nil {
-			return nil, err
+			return message.Holder{}, err
 		}
 		buffered = len(buffer.Bytes())
 	}
 	toRead := binary.BigEndian.Uint32(buffer.Next(messageSizeByteAmount)) - uint32(buffered)
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
-		return nil, err
+		return message.Holder{}, err
 	}
 	decoder := gob.NewDecoder(buffer)
 
 	var holder message.Holder
 	if err := decoder.Decode(&holder); err != nil {
-		return nil, err
+		return message.Holder{}, err
 	}
 
-	return &holder, nil
+	return holder, nil
 }
 
 func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {
