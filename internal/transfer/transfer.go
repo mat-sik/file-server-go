@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/Message"
+	"github.com/mat-sik/file-server-go/internal/message"
 	"io"
 )
 
@@ -41,7 +41,7 @@ func transfer(
 func receiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
-) (*Message.Holder, error) {
+) (*message.Holder, error) {
 	buffered := len(buffer.Bytes())
 	if buffered < messageSizeByteAmount {
 		if _, err := io.ReadAtLeast(reader, buffer.Bytes(), messageSizeByteAmount); err != nil {
@@ -55,7 +55,7 @@ func receiveMessage(
 	}
 	decoder := gob.NewDecoder(buffer)
 
-	var message Message.Holder
+	var message message.Holder
 	if err := decoder.Decode(&message); err != nil {
 		return nil, err
 	}

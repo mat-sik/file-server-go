@@ -1,4 +1,4 @@
-package Message
+package message
 
 type Holder struct {
 	TypeName      TypeName
