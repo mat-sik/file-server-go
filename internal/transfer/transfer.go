@@ -63,14 +63,14 @@ func receiveMessage(
 	return &holder, nil
 }
 
-func ensureBufferHasSpace(buffer *bytes.Buffer, toRead uint32) error {
+func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {
 	bufferCapacity := uint32(buffer.Cap())
 	buffered := uint32(len(buffer.Bytes()))
-	if toRead+buffered > bufferCapacity {
+	if size+buffered > bufferCapacity {
 		return ErrTooBigMessage
 	}
 	availableSize := uint32(buffer.Available())
-	if availableSize < toRead {
+	if availableSize < size {
 		if err := compact(buffer); err != nil {
 			return err
 		}
