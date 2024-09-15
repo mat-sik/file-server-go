@@ -86,7 +86,7 @@ func receiveMessage(
 
 func ensureBuffered(reader io.Reader, buffer *bytes.Buffer, min int) error {
 	if buffer.Len() < messageSizeByteAmount {
-		if _, err := readAtLeast(reader, buffer, messageSizeByteAmount); err != nil {
+		if _, err := readAtLeast(reader, buffer, min); err != nil {
 			return err
 		}
 	}
