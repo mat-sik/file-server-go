@@ -67,10 +67,8 @@ func receiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Holder, error) {
-	if buffer.Len() < messageSizeByteAmount {
-		if _, err := readAtLeast(reader, buffer, messageSizeByteAmount); err != nil {
-			return message.Holder{}, err
-		}
+	if err := ensureBuffered(reader, buffer, messageSizeByteAmount); err != nil {
+		return message.Holder{}, err
 	}
 	toRead := binary.BigEndian.Uint32(buffer.Next(messageSizeByteAmount)) - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
@@ -84,6 +82,15 @@ func receiveMessage(
 	}
 
 	return holder, nil
+}
+
+func ensureBuffered(reader io.Reader, buffer *bytes.Buffer, min int) error {
+	if buffer.Len() < messageSizeByteAmount {
+		if _, err := readAtLeast(reader, buffer, messageSizeByteAmount); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func readAtLeast(reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
