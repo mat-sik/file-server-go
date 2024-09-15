@@ -21,9 +21,9 @@ func transfer(
 	written := 0
 	for {
 		select {
+		default:
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
 		}
 		if buffered := buffer.Len(); buffered > 0 {
 			limit := min(buffered, toTransfer-written)
@@ -104,9 +104,9 @@ func ensureBuffered(ctx context.Context, reader io.Reader, buffer *bytes.Buffer,
 func readAtLeast(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
 	for {
 		select {
+		default:
 		case <-ctx.Done():
 			return buffer.Len(), ctx.Err()
-		default:
 		}
 		availableSpace := int64(buffer.Available())
 		limitedReader := io.LimitReader(reader, availableSpace)
