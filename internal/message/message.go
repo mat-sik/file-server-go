@@ -29,7 +29,7 @@ func ExtractType[T any](holder Holder) (T, error) {
 }
 
 type GetFileRequest struct {
-	FileName string
+	Filename string
 }
 
 func NewGetFileRequestHolder(filename string) Holder {
