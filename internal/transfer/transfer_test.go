@@ -2,6 +2,10 @@ package transfer
 
 import (
 	"bytes"
+	"encoding/gob"
+	"fmt"
+	"github.com/mat-sik/file-server-go/internal/message"
+	"io"
 	"strings"
 	"testing"
 )
@@ -149,4 +153,30 @@ func Test_transfer_offsetAndBuffered(t *testing.T) {
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
+}
+
+func Test_sendMessage(t *testing.T) {
+	//
+	gob.Register(message.PutFileRequest{})
+
+	holder := message.NewPutFileRequestHolder("huge_file_name", 404)
+	sizeBuffer := make([]byte, 4)
+	messageBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	var socket io.Writer = bytes.NewBuffer(make([]byte, 0, 1024))
+
+	a := messageBuffer.Next(4)
+	fmt.Printf("%v", a)
+
+	err := sendMessage(socket, sizeBuffer, messageBuffer, &holder)
+	if err != nil {
+		t.Error(err)
+	}
+
+	messageBuffer.Reset()
+
+	out, err := receiveMessage(socket.(io.Reader), messageBuffer)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%v", out)
 }

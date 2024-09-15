@@ -18,7 +18,7 @@ func transfer(
 	bufferCapacity := int64(buffer.Cap())
 	written := 0
 	for {
-		if buffered := len(buffer.Bytes()); buffered > 0 {
+		if buffered := buffer.Len(); buffered > 0 {
 			limit := min(buffered, toTransfer-written)
 			n, err := writer.Write(buffer.Next(limit))
 			if err != nil {
@@ -38,18 +38,41 @@ func transfer(
 	return nil
 }
 
+func sendMessage(
+	writer io.Writer,
+	sizeBuffer []byte,
+	messageBuffer *bytes.Buffer,
+	holder *message.Holder,
+) error {
+	encoder := gob.NewEncoder(messageBuffer)
+	if err := encoder.Encode(holder); err != nil {
+		return err
+	}
+	encodeMessageSize(messageBuffer, sizeBuffer)
+	if _, err := writer.Write(sizeBuffer); err != nil {
+		return err
+	}
+	if _, err := messageBuffer.WriteTo(writer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func encodeMessageSize(messageBuffer *bytes.Buffer, sizeBuffer []byte) {
+	encodedHolderSize := messageBuffer.Len()
+	binary.BigEndian.PutUint32(sizeBuffer, uint32(encodedHolderSize))
+}
+
 func receiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Holder, error) {
-	buffered := len(buffer.Bytes())
-	if buffered < messageSizeByteAmount {
-		if _, err := io.ReadAtLeast(reader, buffer.Bytes(), messageSizeByteAmount); err != nil {
+	if buffer.Len() < messageSizeByteAmount {
+		if _, err := readAtLeast(reader, buffer, messageSizeByteAmount); err != nil {
 			return message.Holder{}, err
 		}
-		buffered = len(buffer.Bytes())
 	}
-	toRead := binary.BigEndian.Uint32(buffer.Next(messageSizeByteAmount)) - uint32(buffered)
+	toRead := binary.BigEndian.Uint32(buffer.Next(messageSizeByteAmount)) - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
 		return message.Holder{}, err
 	}
@@ -63,9 +86,22 @@ func receiveMessage(
 	return holder, nil
 }
 
+func readAtLeast(reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
+	for {
+		availableSpace := int64(buffer.Available())
+		limitedReader := io.LimitReader(reader, availableSpace)
+		if _, err := buffer.ReadFrom(limitedReader); err != nil {
+			return buffer.Len(), err
+		}
+		if buffer.Len() >= min {
+			return buffer.Len(), nil
+		}
+	}
+}
+
 func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {
 	bufferCapacity := uint32(buffer.Cap())
-	buffered := uint32(len(buffer.Bytes()))
+	buffered := uint32(buffer.Len())
 	if size+buffered > bufferCapacity {
 		return ErrTooBigMessage
 	}
