@@ -2,6 +2,7 @@ package transfer
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
@@ -23,7 +24,8 @@ func Test_transfer(t *testing.T) {
 	expectedWriter.WriteString("one two three four f")
 
 	// when
-	err := transfer(reader, writer, buffer, 20)
+	ctx := context.Background()
+	err := transfer(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -53,7 +55,8 @@ func Test_transfer_offset(t *testing.T) {
 	expectedWriter.WriteString("one two three f")
 
 	// when
-	err := transfer(reader, writer, buffer, 15)
+	ctx := context.Background()
+	err := transfer(ctx, reader, writer, buffer, 15)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -82,7 +85,8 @@ func Test_transfer_buffered(t *testing.T) {
 	expectedWriter.WriteString("one two three four")
 
 	// when
-	err := transfer(reader, writer, buffer, 20)
+	ctx := context.Background()
+	err := transfer(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -112,7 +116,8 @@ func Test_transfer_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	expectedWriter.WriteString("one ")
 
 	// when
-	err := transfer(reader, writer, buffer, 5)
+	ctx := context.Background()
+	err := transfer(ctx, reader, writer, buffer, 5)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -142,7 +147,8 @@ func Test_transfer_offsetAndBuffered(t *testing.T) {
 	expectedWriter.WriteString("one two three four ")
 
 	// when
-	err := transfer(reader, writer, buffer, 20)
+	ctx := context.Background()
+	err := transfer(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -174,7 +180,8 @@ func Test_sendMessage(t *testing.T) {
 
 	messageBuffer.Reset()
 
-	out, err := receiveMessage(socket.(io.Reader), messageBuffer)
+	ctx := context.Background()
+	out, err := receiveMessage(ctx, socket.(io.Reader), messageBuffer)
 	if err != nil {
 		t.Error(err)
 	}

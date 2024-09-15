@@ -2,6 +2,7 @@ package transfer
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/gob"
 	"errors"
@@ -10,6 +11,7 @@ import (
 )
 
 func transfer(
+	ctx context.Context,
 	reader io.Reader,
 	writer io.Writer,
 	buffer *bytes.Buffer,
@@ -18,6 +20,11 @@ func transfer(
 	bufferCapacity := int64(buffer.Cap())
 	written := 0
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 		if buffered := buffer.Len(); buffered > 0 {
 			limit := min(buffered, toTransfer-written)
 			n, err := writer.Write(buffer.Next(limit))
@@ -64,10 +71,11 @@ func encodeMessageSize(messageBuffer *bytes.Buffer, sizeBuffer []byte) {
 }
 
 func receiveMessage(
+	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Holder, error) {
-	if err := ensureBuffered(reader, buffer, messageSizeByteAmount); err != nil {
+	if err := ensureBuffered(ctx, reader, buffer, messageSizeByteAmount); err != nil {
 		return message.Holder{}, err
 	}
 	toRead := binary.BigEndian.Uint32(buffer.Next(messageSizeByteAmount)) - uint32(buffer.Len())
@@ -84,17 +92,22 @@ func receiveMessage(
 	return holder, nil
 }
 
-func ensureBuffered(reader io.Reader, buffer *bytes.Buffer, min int) error {
+func ensureBuffered(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) error {
 	if buffer.Len() < messageSizeByteAmount {
-		if _, err := readAtLeast(reader, buffer, min); err != nil {
+		if _, err := readAtLeast(ctx, reader, buffer, min); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func readAtLeast(reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
+func readAtLeast(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
 	for {
+		select {
+		case <-ctx.Done():
+			return buffer.Len(), ctx.Err()
+		default:
+		}
 		availableSpace := int64(buffer.Available())
 		limitedReader := io.LimitReader(reader, availableSpace)
 		if _, err := buffer.ReadFrom(limitedReader); err != nil {
