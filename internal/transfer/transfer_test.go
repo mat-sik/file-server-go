@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"io"
@@ -175,7 +176,7 @@ func Test_sendMessage(t *testing.T) {
 
 	err := sendMessage(socket, sizeBuffer, messageBuffer, &holder)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	messageBuffer.Reset()
@@ -183,7 +184,28 @@ func Test_sendMessage(t *testing.T) {
 	ctx := context.Background()
 	out, err := receiveMessage(ctx, socket.(io.Reader), messageBuffer)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	fmt.Printf("%v", out)
+}
+
+func Test_foo(t *testing.T) {
+	holder := message.NewPutFileRequestHolder("huge_file_name", 404)
+
+	out, err := json.Marshal(holder)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var newHolder message.Holder
+	if err = json.Unmarshal(out, &newHolder); err != nil {
+		t.Fatal(err)
+	}
+
+	payload := newHolder.PayloadStruct.(map[string]any)
+	var toDeserialize message.PutFileRequest
+	err = message.UnmarshalType(payload, &toDeserialize)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

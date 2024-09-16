@@ -1,6 +1,10 @@
 package message
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"reflect"
+)
 
 type Holder struct {
 	TypeName      TypeName
@@ -26,6 +30,32 @@ func ExtractType[T any](holder Holder) (T, error) {
 		return payload, ErrFailedExtraction
 	}
 	return payload, nil
+}
+
+func UnmarshalType(serializedStruct map[string]any, passedStruct any) error {
+	value := reflect.ValueOf(passedStruct).Elem()
+	valueType := value.Type()
+
+	for i := range valueType.NumField() {
+		field := valueType.Field(i)
+		fieldValue := value.Field(i)
+
+		if !fieldValue.CanSet() {
+			return fmt.Errorf("cannot set %s field value", field.Name)
+		}
+
+		mapValue, exists := serializedStruct[field.Name]
+		if !exists {
+			return fmt.Errorf("cannot find %s field value", field.Name)
+		}
+
+		if mapValueReflect := reflect.ValueOf(mapValue); mapValueReflect.Type().ConvertibleTo(fieldValue.Type()) {
+			fieldValue.Set(mapValueReflect.Convert(fieldValue.Type()))
+		} else {
+			return fmt.Errorf("cannot assign value of type %T to field %s", mapValue, field.Name)
+		}
+	}
+	return nil
 }
 
 type GetFileRequest struct {
