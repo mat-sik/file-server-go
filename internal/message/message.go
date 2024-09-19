@@ -2,60 +2,43 @@ package message
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 )
 
 type Holder struct {
-	TypeName      TypeName
+	PayloadType   TypeName
 	PayloadStruct any
 }
 
-type TypeName string
+type TypeName int
 
 const (
-	GetFileRequestType  TypeName = "GetFileReq"
-	GetFileResponseType TypeName = "GetFileRes"
+	GetFileRequestType TypeName = iota
+	GetFileResponseType
 
-	PutFileRequestType  TypeName = "PutFileReq"
-	PutFileResponseType TypeName = "PutFileRes"
+	PutFileRequestType
+	PutFileResponseType
 
-	DeleteFileRequestType  TypeName = "DeleteFileReq"
-	DeleteFileResponseType TypeName = "DeleteFileRes"
+	DeleteFileRequestType
+	DeleteFileResponseType
 )
 
-func ExtractType[T any](holder Holder) (T, error) {
-	payload, ok := holder.PayloadStruct.(T)
-	if !ok {
-		return payload, ErrFailedExtraction
+func TypeNameConverter(typeName TypeName) (any, error) {
+	switch typeName {
+	case GetFileRequestType:
+		return &GetFileRequest{}, nil
+	case GetFileResponseType:
+		return &GetFileResponse{}, nil
+	case PutFileRequestType:
+		return &PutFileRequest{}, nil
+	case PutFileResponseType:
+		return &PutFileResponse{}, nil
+	case DeleteFileRequestType:
+		return &DeleteFileRequest{}, nil
+	case DeleteFileResponseType:
+		return &DeleteFileResponse{}, nil
+	default:
+		return nil, errors.New("unknown type")
 	}
-	return payload, nil
-}
-
-func UnmarshalType(serializedStruct map[string]any, passedStruct any) error {
-	value := reflect.ValueOf(passedStruct).Elem()
-	valueType := value.Type()
-
-	for i := range valueType.NumField() {
-		field := valueType.Field(i)
-		fieldValue := value.Field(i)
-
-		if !fieldValue.CanSet() {
-			return fmt.Errorf("cannot set %s field value", field.Name)
-		}
-
-		mapValue, exists := serializedStruct[field.Name]
-		if !exists {
-			return fmt.Errorf("cannot find %s field value", field.Name)
-		}
-
-		if mapValueReflect := reflect.ValueOf(mapValue); mapValueReflect.Type().ConvertibleTo(fieldValue.Type()) {
-			fieldValue.Set(mapValueReflect.Convert(fieldValue.Type()))
-		} else {
-			return fmt.Errorf("cannot assign value of type %T to field %s", mapValue, field.Name)
-		}
-	}
-	return nil
 }
 
 type GetFileRequest struct {
@@ -64,7 +47,7 @@ type GetFileRequest struct {
 
 func NewGetFileRequestHolder(filename string) Holder {
 	return Holder{
-		TypeName:      GetFileRequestType,
+		PayloadType:   GetFileRequestType,
 		PayloadStruct: GetFileRequest{filename},
 	}
 }
@@ -78,7 +61,7 @@ type GetFileResponse struct {
 
 func NewGetFileResponseHolder(status int, size int) Holder {
 	return Holder{
-		TypeName:      GetFileResponseType,
+		PayloadType:   GetFileResponseType,
 		PayloadStruct: GetFileResponse{Status: status, Size: size},
 	}
 }
@@ -90,7 +73,7 @@ type PutFileRequest struct {
 
 func NewPutFileRequestHolder(filename string, size int) Holder {
 	return Holder{
-		TypeName:      PutFileRequestType,
+		PayloadType:   PutFileRequestType,
 		PayloadStruct: PutFileRequest{filename, size},
 	}
 }
@@ -101,7 +84,7 @@ type PutFileResponse struct {
 
 func NewPutFileResponseHolder(status int) Holder {
 	return Holder{
-		TypeName:      PutFileResponseType,
+		PayloadType:   PutFileResponseType,
 		PayloadStruct: PutFileResponse{status},
 	}
 }
@@ -112,7 +95,7 @@ type DeleteFileRequest struct {
 
 func NewDeleteFileRequestHolder(filename string) Holder {
 	return Holder{
-		TypeName:      DeleteFileRequestType,
+		PayloadType:   DeleteFileRequestType,
 		PayloadStruct: DeleteFileRequest{filename},
 	}
 }
@@ -123,7 +106,7 @@ type DeleteFileResponse struct {
 
 func NewDeleteFileResponseHolder(status int) Holder {
 	return Holder{
-		TypeName:      DeleteFileResponseType,
+		PayloadType:   DeleteFileResponseType,
 		PayloadStruct: DeleteFileResponse{status},
 	}
 }
