@@ -10,7 +10,7 @@ import (
 	"io"
 )
 
-func sendMessage(
+func SendMessage(
 	writer io.Writer,
 	headerBuffer []byte,
 	messageBuffer *bytes.Buffer,
@@ -40,7 +40,7 @@ func sendMessage(
 	return nil
 }
 
-func receiveMessage(
+func ReceiveMessage(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,

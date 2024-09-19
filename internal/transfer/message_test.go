@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_sendMessage(t *testing.T) {
+func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	//
 	holder := message.NewPutFileRequestHolder("huge_file_name", 404)
 	sizeBuffer := make([]byte, 12)
@@ -17,7 +17,7 @@ func Test_sendMessage(t *testing.T) {
 	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
 
 	var sendSocket io.Writer = buffer
-	err := sendMessage(sendSocket, sizeBuffer, messageBuffer, &holder)
+	err := SendMessage(sendSocket, sizeBuffer, messageBuffer, &holder)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func Test_sendMessage(t *testing.T) {
 
 	var readSocket io.Reader = buffer
 	ctx := context.Background()
-	out, err := receiveMessage(ctx, readSocket, messageBuffer)
+	out, err := ReceiveMessage(ctx, readSocket, messageBuffer)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func stream(
+func Stream(
 	ctx context.Context,
 	reader io.Reader,
 	writer io.Writer,

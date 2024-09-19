@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_stream(t *testing.T) {
+func Test_Stream(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 0, 10))
 
@@ -21,7 +21,7 @@ func Test_stream(t *testing.T) {
 
 	// when
 	ctx := context.Background()
-	err := stream(ctx, reader, writer, buffer, 20)
+	err := Stream(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -34,7 +34,7 @@ func Test_stream(t *testing.T) {
 	}
 }
 
-func Test_stream_offset(t *testing.T) {
+func Test_Stream_offset(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
 
@@ -52,7 +52,7 @@ func Test_stream_offset(t *testing.T) {
 
 	// when
 	ctx := context.Background()
-	err := stream(ctx, reader, writer, buffer, 15)
+	err := Stream(ctx, reader, writer, buffer, 15)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -65,7 +65,7 @@ func Test_stream_offset(t *testing.T) {
 	}
 }
 
-func Test_stream_buffered(t *testing.T) {
+func Test_Stream_buffered(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
 
@@ -82,7 +82,7 @@ func Test_stream_buffered(t *testing.T) {
 
 	// when
 	ctx := context.Background()
-	err := stream(ctx, reader, writer, buffer, 20)
+	err := Stream(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -95,7 +95,7 @@ func Test_stream_buffered(t *testing.T) {
 	}
 }
 
-func Test_stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
+func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
 
@@ -113,7 +113,7 @@ func Test_stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 
 	// when
 	ctx := context.Background()
-	err := stream(ctx, reader, writer, buffer, 5)
+	err := Stream(ctx, reader, writer, buffer, 5)
 	// then
 	if err != nil {
 		t.Error(err)
@@ -126,7 +126,7 @@ func Test_stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	}
 }
 
-func Test_stream_offsetAndBuffered(t *testing.T) {
+func Test_Stream_offsetAndBuffered(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
 
@@ -144,7 +144,7 @@ func Test_stream_offsetAndBuffered(t *testing.T) {
 
 	// when
 	ctx := context.Background()
-	err := stream(ctx, reader, writer, buffer, 20)
+	err := Stream(ctx, reader, writer, buffer, 20)
 	// then
 	if err != nil {
 		t.Error(err)
