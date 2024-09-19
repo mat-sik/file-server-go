@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer/mheader"
 	"io"
@@ -44,7 +45,7 @@ func receiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Holder, error) {
-	if err := ensureBuffered(ctx, reader, buffer, HeaderSize); err != nil {
+	if err := ensureBuffered(ctx, reader, buffer, mheader.HeaderSize); err != nil {
 		return message.Holder{}, err
 	}
 
@@ -72,7 +73,7 @@ func receiveMessage(
 }
 
 func ensureBuffered(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) error {
-	if buffer.Len() < Uint32ByteSize {
+	if buffer.Len() < min {
 		if _, err := readAtLeast(ctx, reader, buffer, min); err != nil {
 			return err
 		}
@@ -119,3 +120,5 @@ func compact(buffer *bytes.Buffer) error {
 	_, err := buffer.Write(payload)
 	return err
 }
+
+var ErrTooBigMessage = errors.New("buffer is too small to fit the message")
