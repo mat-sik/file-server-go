@@ -13,18 +13,24 @@ type MessageHeader struct {
 }
 
 func EncodeHeader(header MessageHeader, headerBuffer []byte) error {
-	if err := encodeMessageSize(header.PayloadSize, headerBuffer); err != nil {
+	messageSize := header.PayloadSize
+	if err := encodeMessageSize(messageSize, headerBuffer); err != nil {
 		return err
 	}
-	if err := encodeMessageType(header.PayloadType, headerBuffer[uint32ByteSize:]); err != nil {
+	messageType := header.PayloadType
+	if err := encodeMessageType(messageType, headerBuffer[uint32ByteSize:]); err != nil {
 		return err
 	}
 	return nil
 }
 
 func DecodeHeader(buffer *bytes.Buffer) MessageHeader {
-	payloadSize := binary.BigEndian.Uint32(buffer.Next(uint32ByteSize))
-	payloadType := message.TypeName(binary.BigEndian.Uint64(buffer.Next(uint64ByteSize)))
+	uint32ByteSlice := buffer.Next(uint32ByteSize)
+	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
+
+	uint64ByteSlice := buffer.Next(uint64ByteSize)
+	payloadType := message.TypeName(binary.BigEndian.Uint64(uint64ByteSlice))
+
 	return MessageHeader{
 		PayloadSize: payloadSize,
 		PayloadType: payloadType,
@@ -47,7 +53,7 @@ func encodeMessageType(messageType message.TypeName, headerBuffer []byte) error 
 	return nil
 }
 
-var ErrHeaderBufferTooSmall = errors.New("mheader buffer too small")
+var ErrHeaderBufferTooSmall = errors.New("header buffer too small")
 
 const (
 	uint32ByteSize = 4
