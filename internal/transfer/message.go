@@ -3,9 +3,9 @@ package transfer
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/mheader"
 	"io"
 )
 
@@ -22,11 +22,11 @@ func sendMessage(
 
 	messageSize := uint32(messageBuffer.Len())
 	messageType := holder.PayloadType
-	header := messageHeader{
-		payloadSize: messageSize,
-		payloadType: messageType,
+	header := mheader.MessageHeader{
+		PayloadSize: messageSize,
+		PayloadType: messageType,
 	}
-	if err := encodeHeader(header, headerBuffer); err != nil {
+	if err := mheader.EncodeHeader(header, headerBuffer); err != nil {
 		return err
 	}
 
@@ -39,46 +39,6 @@ func sendMessage(
 	return nil
 }
 
-type messageHeader struct {
-	payloadSize uint32
-	payloadType message.TypeName
-}
-
-func encodeHeader(header messageHeader, headerBuffer []byte) error {
-	if err := encodeMessageSize(header.payloadSize, headerBuffer); err != nil {
-		return err
-	}
-	if err := encodeMessageType(header.payloadType, headerBuffer[Uint32ByteSize:]); err != nil {
-		return err
-	}
-	return nil
-}
-
-func decodeHeader(buffer *bytes.Buffer) messageHeader {
-	payloadSize := binary.BigEndian.Uint32(buffer.Next(Uint32ByteSize))
-	payloadType := message.TypeName(binary.BigEndian.Uint64(buffer.Next(Uint64ByteSize)))
-	return messageHeader{
-		payloadSize: payloadSize,
-		payloadType: payloadType,
-	}
-}
-
-func encodeMessageSize(messageSize uint32, headerBuffer []byte) error {
-	if cap(headerBuffer) < Uint32ByteSize {
-		return ErrHeaderBufferTooSmall
-	}
-	binary.BigEndian.PutUint32(headerBuffer, messageSize)
-	return nil
-}
-
-func encodeMessageType(messageType message.TypeName, headerBuffer []byte) error {
-	if cap(headerBuffer) < Uint64ByteSize {
-		return ErrHeaderBufferTooSmall
-	}
-	binary.BigEndian.PutUint64(headerBuffer, uint64(messageType))
-	return nil
-}
-
 func receiveMessage(
 	ctx context.Context,
 	reader io.Reader,
@@ -88,14 +48,14 @@ func receiveMessage(
 		return message.Holder{}, err
 	}
 
-	header := decodeHeader(buffer)
+	header := mheader.DecodeHeader(buffer)
 
-	toRead := header.payloadSize - uint32(buffer.Len())
+	toRead := header.PayloadSize - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
 		return message.Holder{}, err
 	}
 
-	payload, err := message.TypeNameConverter(header.payloadType)
+	payload, err := message.TypeNameConverter(header.PayloadType)
 	if err != nil {
 		return message.Holder{}, err
 	}
@@ -106,7 +66,7 @@ func receiveMessage(
 	}
 
 	return message.Holder{
-		PayloadType:   header.payloadType,
+		PayloadType:   header.PayloadType,
 		PayloadStruct: payload,
 	}, nil
 }
