@@ -9,7 +9,7 @@ type Holder struct {
 	PayloadStruct any
 }
 
-type TypeName int
+type TypeName uint64
 
 const (
 	GetFileRequestType TypeName = iota
