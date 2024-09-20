@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/controller"
+	"github.com/mat-sik/file-server-go/internal/handler"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"os"
@@ -11,9 +11,10 @@ import (
 
 func GetFile(
 	ctx context.Context,
-	rs controller.RequestState,
+	rs handler.RequestState,
 	filename string,
 ) (message.Holder, error) {
+	defer rs.Buffer.Reset()
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.NewGetFileResponseHolder(404, 0), nil
@@ -37,7 +38,8 @@ func GetFile(
 	return message.NewGetFileResponseHolder(200, fileSize), nil
 }
 
-func PutFile(ctx context.Context, rs controller.RequestState, filename string, fileSize int) (message.Holder, error) {
+func PutFile(ctx context.Context, rs handler.RequestState, filename string, fileSize int) (message.Holder, error) {
+	defer rs.Buffer.Reset()
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
 		return message.Holder{}, err
