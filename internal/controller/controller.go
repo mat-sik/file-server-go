@@ -17,3 +17,9 @@ func getFile(ctx context.Context, rs RequestState, req message.GetFileRequest) (
 	filename := req.Filename
 	return service.GetFile(ctx, rs, filename)
 }
+
+func putFile(ctx context.Context, rs RequestState, req message.PutFileRequest) (message.Holder, error) {
+	filename := req.FileName
+	fileSize := req.Size
+	return service.PutFile(ctx, rs, filename, fileSize)
+}

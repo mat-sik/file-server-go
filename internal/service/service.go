@@ -36,3 +36,18 @@ func GetFile(
 
 	return message.NewGetFileResponseHolder(200, fileSize), nil
 }
+
+func PutFile(ctx context.Context, rs controller.RequestState, filename string, fileSize int) (message.Holder, error) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	if err != nil {
+		return message.Holder{}, err
+	}
+
+	writer := rs.Conn
+	buffer := rs.Buffer
+	if err = transfer.Stream(ctx, file, writer, buffer, fileSize); err != nil {
+		return message.Holder{}, err
+	}
+
+	return message.NewPutFileResponseHolder(200), nil
+}
