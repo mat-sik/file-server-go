@@ -23,7 +23,8 @@ func HandleRequest(ctx context.Context, rs RequestState) error {
 	}
 	switch holder.PayloadType {
 	case message.GetFileRequestType:
-		if err = handleRequest(ctx, rs, holder, controller.GetFile); err != nil {
+		req := holder.PayloadStruct.(*message.GetFileRequest)
+		if err = controller.GetFile(ctx, rs, *req); err != nil {
 			return err
 		}
 	case message.PutFileRequestType:

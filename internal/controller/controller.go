@@ -7,7 +7,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/service"
 )
 
-func GetFile(ctx context.Context, rs handler.RequestState, req message.GetFileRequest) (message.Holder, error) {
+func GetFile(ctx context.Context, rs handler.RequestState, req message.GetFileRequest) error {
 	filename := req.Filename
 	return service.GetFile(ctx, rs, filename)
 }
