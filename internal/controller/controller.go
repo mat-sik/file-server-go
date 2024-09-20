@@ -23,3 +23,8 @@ func putFile(ctx context.Context, rs RequestState, req message.PutFileRequest) (
 	fileSize := req.Size
 	return service.PutFile(ctx, rs, filename, fileSize)
 }
+
+func deleteFile(ctx context.Context, req message.DeleteFileRequest) (message.Holder, error) {
+	filename := req.FileName
+	return service.DeleteFile(ctx, filename)
+}

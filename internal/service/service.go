@@ -51,3 +51,16 @@ func PutFile(ctx context.Context, rs controller.RequestState, filename string, f
 
 	return message.NewPutFileResponseHolder(200), nil
 }
+
+func DeleteFile(ctx context.Context, filename string) (message.Holder, error) {
+	select {
+	case <-ctx.Done():
+	default:
+		return message.Holder{}, ctx.Err()
+	}
+	err := os.Remove(filename)
+	if err != nil {
+		return message.Holder{}, err
+	}
+	return message.NewDeleteFileResponseHolder(200), nil
+}
