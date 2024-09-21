@@ -29,8 +29,6 @@ func NewRequestState(conn net.Conn) RequestState {
 }
 
 func RouteRequest(ctx context.Context, rs RequestState) error {
-	defer safeConnectionClose(rs)
-
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
@@ -75,12 +73,6 @@ func handleReq[T any](
 		return err
 	}
 	return nil
-}
-
-func safeConnectionClose(rs RequestState) {
-	if err := rs.Conn.Close(); err != nil {
-		panic(err)
-	}
 }
 
 const timeForRequest = 5 * time.Second
