@@ -39,7 +39,7 @@ func ReceiveResponse(
 	return holder, nil
 }
 
-func HandleGetFileResponse(
+func HandleGetFile(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
@@ -75,34 +75,32 @@ func HandleGetFileResponse(
 func PutFileHandleRequest(
 	ctx context.Context,
 	writer io.Writer,
-	reader io.Reader,
 	headerBuffer []byte,
 	buffer *bytes.Buffer,
 	filename string,
-) (message.Holder, error) {
+) error {
 	defer buffer.Reset()
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if err != nil {
-		return message.Holder{}, err
+		return err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return message.Holder{}, err
+		return err
 	}
 
 	fileSize := int(fileInfo.Size())
 
 	holder := message.NewPutFileRequestHolder(filename, fileSize)
 	if err = SendRequest(writer, headerBuffer, buffer, &holder); err != nil {
-		return message.Holder{}, err
+		return err
 	}
 	if err = transfer.Stream(ctx, file, writer, buffer, fileSize); err != nil {
-		return message.Holder{}, err
+		return err
 	}
-
-	return ReceiveResponse(ctx, reader, buffer)
+	return nil
 }
 
 var ErrUnexpectedResponse = errors.New("unexpected response")
