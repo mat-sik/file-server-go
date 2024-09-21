@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func HandleRequest(
+func SendRequest(
 	writer io.Writer,
 	headerBuffer []byte,
 	messageBuffer *bytes.Buffer,
@@ -25,7 +25,7 @@ func HandleRequest(
 	return nil
 }
 
-func HandleResponse(
+func ReceiveResponse(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
@@ -39,65 +39,70 @@ func HandleResponse(
 	return holder, nil
 }
 
-func GetFileHandleResponse(
+func HandleGetFileResponse(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
 	filename string,
-) error {
+) (message.Holder, error) {
 	defer buffer.Reset()
 
 	holder, err := transfer.ReceiveMessage(ctx, reader, buffer)
 	if err != nil {
-		return err
+		return message.Holder{}, err
 	}
 
 	res, ok := holder.PayloadStruct.(*message.GetFileResponse)
 	if !ok {
-		return ErrUnexpectedResponse
+		return message.Holder{}, ErrUnexpectedResponse
 	}
 	if res.Status != 200 {
-		return fmt.Errorf("error, status code: %d", res.Status)
+		return message.Holder{}, fmt.Errorf("error, status code: %d", res.Status)
 	}
 
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
-		return err
+		return message.Holder{}, err
 	}
 
 	fileSize := res.Size
 	if err = transfer.Stream(ctx, reader, file, buffer, fileSize); err != nil {
-		return err
+		return message.Holder{}, err
 	}
-	return nil
+	return holder, nil
 }
 
 func PutFileHandleRequest(
 	ctx context.Context,
 	writer io.Writer,
+	reader io.Reader,
 	headerBuffer []byte,
 	buffer *bytes.Buffer,
 	filename string,
-) error {
+) (message.Holder, error) {
 	defer buffer.Reset()
 
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if err != nil {
-		return err
+		return message.Holder{}, err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return err
+		return message.Holder{}, err
 	}
 
 	fileSize := int(fileInfo.Size())
 
 	holder := message.NewPutFileRequestHolder(filename, fileSize)
-	if err = HandleRequest(writer, headerBuffer, buffer, &holder); err != nil {
-		return err
+	if err = SendRequest(writer, headerBuffer, buffer, &holder); err != nil {
+		return message.Holder{}, err
 	}
-	return transfer.Stream(ctx, file, writer, buffer, fileSize)
+	if err = transfer.Stream(ctx, file, writer, buffer, fileSize); err != nil {
+		return message.Holder{}, err
+	}
+
+	return ReceiveResponse(ctx, reader, buffer)
 }
 
 var ErrUnexpectedResponse = errors.New("unexpected response")
