@@ -3,23 +3,23 @@ package controller
 import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/server/router"
 	"github.com/mat-sik/file-server-go/internal/server/service"
+	"github.com/mat-sik/file-server-go/internal/transfer/state"
 )
 
-func GetFile(ctx context.Context, rs router.RequestState, req message.GetFileRequest) error {
-	writer := rs.Conn
-	headerBuffer := rs.HeaderBuffer
-	messageBuffer := rs.Buffer
+func GetFile(ctx context.Context, s state.ConnectionState, req message.GetFileRequest) error {
+	writer := s.Conn
+	headerBuffer := s.HeaderBuffer
+	messageBuffer := s.Buffer
 
 	filename := req.Filename
 
 	return service.GetFile(ctx, writer, headerBuffer, messageBuffer, filename)
 }
 
-func PutFile(ctx context.Context, rs router.RequestState, req message.PutFileRequest) (message.Holder, error) {
-	writer := rs.Conn
-	buffer := rs.Buffer
+func PutFile(ctx context.Context, s state.ConnectionState, req message.PutFileRequest) (message.Holder, error) {
+	writer := s.Conn
+	buffer := s.Buffer
 
 	filename := req.FileName
 	fileSize := req.Size

@@ -1,56 +1,38 @@
 package router
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/server/controller"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/mheader"
-	"net"
+	"github.com/mat-sik/file-server-go/internal/transfer/state"
 	"time"
 )
 
-type RequestState struct {
-	Conn         net.Conn
-	Buffer       *bytes.Buffer
-	HeaderBuffer []byte
-}
-
-func NewRequestState(conn net.Conn) RequestState {
-	buffer := bytes.NewBuffer(make([]byte, 4*1024))
-	headerBuffer := make([]byte, mheader.HeaderSize)
-	return RequestState{
-		Conn:         conn,
-		Buffer:       buffer,
-		HeaderBuffer: headerBuffer,
-	}
-}
-
-func RouteRequest(ctx context.Context, rs RequestState) error {
+func RouteRequest(ctx context.Context, s state.ConnectionState) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	holder, err := transfer.ReceiveMessage(ctx, rs.Conn, rs.Buffer)
+	holder, err := transfer.ReceiveMessage(ctx, s.Conn, s.Buffer)
 	if err != nil {
 		return err
 	}
 	switch holder.PayloadType {
 	case message.GetFileRequestType:
 		req := holder.PayloadStruct.(*message.GetFileRequest)
-		if err = controller.GetFile(ctx, rs, *req); err != nil {
+		if err = controller.GetFile(ctx, s, *req); err != nil {
 			return err
 		}
 	case message.PutFileRequestType:
 		putFileFunc := func(req message.PutFileRequest) (message.Holder, error) {
-			return controller.PutFile(ctx, rs, req)
+			return controller.PutFile(ctx, s, req)
 		}
-		if err = handleReq(rs, holder, putFileFunc); err != nil {
+		if err = handleReq(s, holder, putFileFunc); err != nil {
 			return err
 		}
 	case message.DeleteFileRequestType:
-		if err = handleReq(rs, holder, controller.DeleteFile); err != nil {
+		if err = handleReq(s, holder, controller.DeleteFile); err != nil {
 			return err
 		}
 	default:
@@ -60,7 +42,7 @@ func RouteRequest(ctx context.Context, rs RequestState) error {
 }
 
 func handleReq[T any](
-	rs RequestState,
+	s state.ConnectionState,
 	holder message.Holder,
 	reqFunc func(T) (message.Holder, error),
 ) error {
@@ -69,7 +51,7 @@ func handleReq[T any](
 	if err != nil {
 		return err
 	}
-	if err = transfer.SendMessage(rs.Conn, rs.HeaderBuffer, rs.Buffer, &res); err != nil {
+	if err = transfer.SendMessage(s.Conn, s.HeaderBuffer, s.Buffer, &res); err != nil {
 		return err
 	}
 	return nil
