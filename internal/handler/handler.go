@@ -28,11 +28,14 @@ func HandleRequest(ctx context.Context, rs RequestState) error {
 			return err
 		}
 	case message.PutFileRequestType:
-		if err = handleRequest(ctx, rs, holder, controller.PutFile); err != nil {
+		putFileFunc := func(req message.PutFileRequest) (message.Holder, error) {
+			return controller.PutFile(ctx, rs, req)
+		}
+		if err = handleReq(rs, holder, putFileFunc); err != nil {
 			return err
 		}
 	case message.DeleteFileRequestType:
-		if err = handleRequest(ctx, rs, holder, controller.DeleteFile); err != nil {
+		if err = handleReq(rs, holder, controller.DeleteFile); err != nil {
 			return err
 		}
 	default:
@@ -41,14 +44,13 @@ func HandleRequest(ctx context.Context, rs RequestState) error {
 	return nil
 }
 
-func handleRequest[T any](
-	ctx context.Context,
+func handleReq[T any](
 	rs RequestState,
 	holder message.Holder,
-	controllerFunc func(context.Context, RequestState, T) (message.Holder, error),
+	reqFunc func(T) (message.Holder, error),
 ) error {
 	req := holder.PayloadStruct.(*T)
-	res, err := controllerFunc(ctx, rs, *req)
+	res, err := reqFunc(*req)
 	if err != nil {
 		return err
 	}
