@@ -1,11 +1,11 @@
-package handler
+package router
 
 import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/controller"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/server/controller"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"net"
 )
@@ -16,7 +16,7 @@ type RequestState struct {
 	HeaderBuffer []byte
 }
 
-func HandleRequest(ctx context.Context, rs RequestState) error {
+func RouteRequest(ctx context.Context, rs RequestState) error {
 	holder, err := transfer.ReceiveMessage(ctx, rs.Conn, rs.Buffer)
 	if err != nil {
 		return err

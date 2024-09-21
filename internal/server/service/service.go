@@ -3,15 +3,15 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/handler"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/server/router"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"os"
 )
 
 func GetFile(
 	ctx context.Context,
-	rs handler.RequestState,
+	rs router.RequestState,
 	filename string,
 ) error {
 	defer rs.Buffer.Reset()
@@ -45,7 +45,7 @@ func GetFile(
 	return nil
 }
 
-func sendMessage(rs handler.RequestState, holder message.Holder) error {
+func sendMessage(rs router.RequestState, holder message.Holder) error {
 	rs.Buffer.Reset()
 	defer rs.Buffer.Reset()
 
@@ -55,7 +55,7 @@ func sendMessage(rs handler.RequestState, holder message.Holder) error {
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, &holder)
 }
 
-func PutFile(ctx context.Context, rs handler.RequestState, filename string, fileSize int) (message.Holder, error) {
+func PutFile(ctx context.Context, rs router.RequestState, filename string, fileSize int) (message.Holder, error) {
 	defer rs.Buffer.Reset()
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
