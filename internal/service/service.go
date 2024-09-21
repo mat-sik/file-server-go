@@ -46,6 +46,7 @@ func GetFile(
 }
 
 func sendMessage(rs handler.RequestState, holder message.Holder) error {
+	rs.Buffer.Reset()
 	defer rs.Buffer.Reset()
 
 	writer := rs.Conn
