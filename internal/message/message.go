@@ -52,8 +52,6 @@ func NewGetFileRequestHolder(filename string) Holder {
 	}
 }
 
-var ErrFailedExtraction = errors.New("failed to extract payload")
-
 type GetFileResponse struct {
 	Status int
 	Size   int
