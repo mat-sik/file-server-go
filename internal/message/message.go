@@ -4,6 +4,14 @@ import (
 	"errors"
 )
 
+type Request interface {
+	GetRequestType() TypeName
+}
+
+type Response interface {
+	GetResponseType() TypeName
+}
+
 type Holder struct {
 	PayloadType   TypeName
 	PayloadStruct any
@@ -45,10 +53,15 @@ type GetFileRequest struct {
 	Filename string
 }
 
+func (req *GetFileRequest) GetRequestType() TypeName {
+	return GetFileRequestType
+}
+
 func NewGetFileRequestHolder(filename string) Holder {
+	payload := GetFileRequest{Filename: filename}
 	return Holder{
-		PayloadType:   GetFileRequestType,
-		PayloadStruct: GetFileRequest{filename},
+		PayloadType:   payload.GetRequestType(),
+		PayloadStruct: payload,
 	}
 }
 
@@ -57,10 +70,15 @@ type GetFileResponse struct {
 	Size   int
 }
 
+func (res *GetFileResponse) GetResponseType() TypeName {
+	return GetFileResponseType
+}
+
 func NewGetFileResponseHolder(status int, size int) Holder {
+	payload := GetFileResponse{Status: status, Size: size}
 	return Holder{
-		PayloadType:   GetFileResponseType,
-		PayloadStruct: GetFileResponse{Status: status, Size: size},
+		PayloadType:   payload.GetResponseType(),
+		PayloadStruct: payload,
 	}
 }
 
@@ -69,10 +87,15 @@ type PutFileRequest struct {
 	Size     int
 }
 
+func (req *PutFileRequest) GetRequestType() TypeName {
+	return PutFileRequestType
+}
+
 func NewPutFileRequestHolder(filename string, size int) Holder {
+	payload := PutFileRequest{FileName: filename, Size: size}
 	return Holder{
-		PayloadType:   PutFileRequestType,
-		PayloadStruct: PutFileRequest{filename, size},
+		PayloadType:   payload.GetRequestType(),
+		PayloadStruct: payload,
 	}
 }
 
@@ -80,10 +103,15 @@ type PutFileResponse struct {
 	Status int
 }
 
+func (res *PutFileResponse) GetResponseType() TypeName {
+	return PutFileResponseType
+}
+
 func NewPutFileResponseHolder(status int) Holder {
+	payload := PutFileResponse{Status: status}
 	return Holder{
-		PayloadType:   PutFileResponseType,
-		PayloadStruct: PutFileResponse{status},
+		PayloadType:   payload.GetResponseType(),
+		PayloadStruct: payload,
 	}
 }
 
@@ -91,10 +119,15 @@ type DeleteFileRequest struct {
 	FileName string
 }
 
+func (req *DeleteFileRequest) GetRequestType() TypeName {
+	return DeleteFileRequestType
+}
+
 func NewDeleteFileRequestHolder(filename string) Holder {
+	payload := DeleteFileRequest{FileName: filename}
 	return Holder{
-		PayloadType:   DeleteFileRequestType,
-		PayloadStruct: DeleteFileRequest{filename},
+		PayloadType:   payload.GetRequestType(),
+		PayloadStruct: payload,
 	}
 }
 
@@ -102,9 +135,14 @@ type DeleteFileResponse struct {
 	Status int
 }
 
+func (res *DeleteFileResponse) GetResponseType() TypeName {
+	return DeleteFileResponseType
+}
+
 func NewDeleteFileResponseHolder(status int) Holder {
+	payload := DeleteFileResponse{Status: status}
 	return Holder{
-		PayloadType:   DeleteFileResponseType,
-		PayloadStruct: DeleteFileResponse{status},
+		PayloadType:   payload.GetResponseType(),
+		PayloadStruct: payload,
 	}
 }
