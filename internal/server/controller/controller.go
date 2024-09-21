@@ -8,14 +8,23 @@ import (
 )
 
 func GetFile(ctx context.Context, rs router.RequestState, req message.GetFileRequest) error {
+	writer := rs.Conn
+	headerBuffer := rs.HeaderBuffer
+	messageBuffer := rs.Buffer
+
 	filename := req.Filename
-	return service.GetFile(ctx, rs, filename)
+
+	return service.GetFile(ctx, writer, headerBuffer, messageBuffer, filename)
 }
 
 func PutFile(ctx context.Context, rs router.RequestState, req message.PutFileRequest) (message.Holder, error) {
+	writer := rs.Conn
+	buffer := rs.Buffer
+
 	filename := req.FileName
 	fileSize := req.Size
-	return service.PutFile(ctx, rs, filename, fileSize)
+
+	return service.PutFile(ctx, writer, buffer, filename, fileSize)
 }
 
 func DeleteFile(req message.DeleteFileRequest) (message.Holder, error) {
