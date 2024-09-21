@@ -15,11 +15,11 @@ func HandleRequest(
 	writer io.Writer,
 	headerBuffer []byte,
 	messageBuffer *bytes.Buffer,
-	holder *message.Holder,
+	req *message.Holder,
 ) error {
 	defer messageBuffer.Reset()
 
-	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, holder); err != nil {
+	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, req); err != nil {
 		return err
 	}
 	return nil
