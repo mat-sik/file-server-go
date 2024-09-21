@@ -7,7 +7,9 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/server/controller"
 	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/transfer/mheader"
 	"net"
+	"time"
 )
 
 type RequestState struct {
@@ -16,7 +18,22 @@ type RequestState struct {
 	HeaderBuffer []byte
 }
 
+func NewRequestState(conn net.Conn) RequestState {
+	buffer := bytes.NewBuffer(make([]byte, 4*1024))
+	headerBuffer := make([]byte, mheader.HeaderSize)
+	return RequestState{
+		Conn:         conn,
+		Buffer:       buffer,
+		HeaderBuffer: headerBuffer,
+	}
+}
+
 func RouteRequest(ctx context.Context, rs RequestState) error {
+	defer safeConnectionClose(rs)
+
+	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
+	defer cancel()
+
 	holder, err := transfer.ReceiveMessage(ctx, rs.Conn, rs.Buffer)
 	if err != nil {
 		return err
@@ -59,5 +76,13 @@ func handleReq[T any](
 	}
 	return nil
 }
+
+func safeConnectionClose(rs RequestState) {
+	if err := rs.Conn.Close(); err != nil {
+		panic(err)
+	}
+}
+
+const timeForRequest = 5 * time.Second
 
 var ErrUnexpectedRequestType = errors.New("unexpected request type")
