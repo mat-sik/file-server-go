@@ -1,12 +1,15 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/server/controller"
+	"github.com/mat-sik/file-server-go/internal/server/service"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
+	"io"
 	"time"
 )
 
@@ -14,25 +17,21 @@ func RouteRequest(ctx context.Context, s state.ConnectionState) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	holder, err := transfer.ReceiveMessage(ctx, s.Conn, s.Buffer)
+	m, err := transfer.ReceiveMessage(ctx, s.Conn, s.Buffer)
 	if err != nil {
 		return err
 	}
-	switch holder.PayloadType {
+	switch m.GetType() {
 	case message.GetFileRequestType:
-		req := holder.PayloadStruct.(*message.GetFileRequest)
-		if err = controller.GetFile(ctx, s, *req); err != nil {
+		if err = handleGetFile(ctx, s, m); err != nil {
 			return err
 		}
 	case message.PutFileRequestType:
-		putFileFunc := func(req message.PutFileRequest) (message.Holder, error) {
-			return controller.PutFile(ctx, s, req)
-		}
-		if err = handleReq(s, holder, putFileFunc); err != nil {
+		if err = handlePutFile(ctx, s, m); err != nil {
 			return err
 		}
 	case message.DeleteFileRequestType:
-		if err = handleReq(s, holder, controller.DeleteFile); err != nil {
+		if err = handleDeleteFile(ctx, s, m); err != nil {
 			return err
 		}
 	default:
@@ -41,17 +40,78 @@ func RouteRequest(ctx context.Context, s state.ConnectionState) error {
 	return nil
 }
 
-func handleReq[T any](
-	s state.ConnectionState,
-	holder message.Holder,
-	reqFunc func(T) (message.Holder, error),
+func handleGetFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
+	req := m.(*message.GetFileRequest)
+	getFile := func(req *message.GetFileRequest) (message.Response, error) {
+		return controller.GetFile(s, req)
+	}
+	streamResponse := func(res message.Response) error {
+		return sendStreamResponse(ctx, s, res.(*service.StreamResponse))
+	}
+	if err := handleReq(req, getFile, streamResponse); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
+	req := m.(*message.PutFileRequest)
+	putFile := func(req *message.PutFileRequest) (message.Response, error) {
+		return controller.PutFile(ctx, s, req)
+	}
+	sendRes := func(res message.Response) error {
+		return sendStreamResponse(ctx, s, res.(*service.StreamResponse))
+	}
+	if err := handleReq(req, putFile, sendRes); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleDeleteFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
+	req := m.(*message.DeleteFileRequest)
+	sendRes := func(res message.Response) error {
+		return sendStreamResponse(ctx, s, res.(*service.StreamResponse))
+	}
+	if err := handleReq(req, controller.DeleteFile, sendRes); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleReq[T message.Request](
+	req T,
+	handleReq func(T) (message.Response, error),
+	handleRes func(message.Response) error,
 ) error {
-	req := holder.PayloadStruct.(*T)
-	res, err := reqFunc(*req)
+	res, err := handleReq(req)
 	if err != nil {
 		return err
 	}
-	if err = transfer.SendMessage(s.Conn, s.HeaderBuffer, s.Buffer, &res); err != nil {
+	return handleRes(res)
+}
+
+func sendStreamResponse(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
+	var writer io.Writer = s.Conn
+	headerBuffer := s.HeaderBuffer
+	buffer := s.Buffer
+
+	res := streamRes.StructResponse
+	if err := sendResponse(writer, headerBuffer, buffer, res); err != nil {
+		return err
+	}
+
+	reader := streamRes.StreamReader
+	toTransfer := streamRes.ToTransfer
+	if err := transfer.Stream(ctx, reader, writer, buffer, toTransfer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func sendResponse(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
+	m := res.(message.Message)
+	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
 		return err
 	}
 	return nil

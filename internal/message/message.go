@@ -4,17 +4,16 @@ import (
 	"errors"
 )
 
+type Message interface {
+	GetType() TypeName
+}
+
 type Request interface {
 	GetRequestType() TypeName
 }
 
 type Response interface {
 	GetResponseType() TypeName
-}
-
-type Holder struct {
-	PayloadType   TypeName
-	PayloadStruct any
 }
 
 type TypeName uint64
@@ -30,7 +29,7 @@ const (
 	DeleteFileResponseType
 )
 
-func TypeNameConverter(typeName TypeName) (any, error) {
+func TypeNameConverter(typeName TypeName) (Message, error) {
 	switch typeName {
 	case GetFileRequestType:
 		return &GetFileRequest{}, nil
@@ -53,16 +52,12 @@ type GetFileRequest struct {
 	Filename string
 }
 
-func (req *GetFileRequest) GetRequestType() TypeName {
-	return GetFileRequestType
+func (req *GetFileRequest) GetType() TypeName {
+	return GetFileResponseType
 }
 
-func NewGetFileRequestHolder(filename string) Holder {
-	payload := GetFileRequest{Filename: filename}
-	return Holder{
-		PayloadType:   payload.GetRequestType(),
-		PayloadStruct: payload,
-	}
+func (req *GetFileRequest) GetRequestType() TypeName {
+	return req.GetType()
 }
 
 type GetFileResponse struct {
@@ -70,16 +65,12 @@ type GetFileResponse struct {
 	Size   int
 }
 
-func (res *GetFileResponse) GetResponseType() TypeName {
-	return GetFileResponseType
+func (res *GetFileResponse) GetType() TypeName {
+	return GetFileRequestType
 }
 
-func NewGetFileResponseHolder(status int, size int) Holder {
-	payload := GetFileResponse{Status: status, Size: size}
-	return Holder{
-		PayloadType:   payload.GetResponseType(),
-		PayloadStruct: payload,
-	}
+func (res *GetFileResponse) GetResponseType() TypeName {
+	return res.GetType()
 }
 
 type PutFileRequest struct {
@@ -87,62 +78,46 @@ type PutFileRequest struct {
 	Size     int
 }
 
-func (req *PutFileRequest) GetRequestType() TypeName {
+func (req *PutFileRequest) GetType() TypeName {
 	return PutFileRequestType
 }
 
-func NewPutFileRequestHolder(filename string, size int) Holder {
-	payload := PutFileRequest{FileName: filename, Size: size}
-	return Holder{
-		PayloadType:   payload.GetRequestType(),
-		PayloadStruct: payload,
-	}
+func (req *PutFileRequest) GetRequestType() TypeName {
+	return req.GetType()
 }
 
 type PutFileResponse struct {
 	Status int
 }
 
-func (res *PutFileResponse) GetResponseType() TypeName {
+func (res *PutFileResponse) GetType() TypeName {
 	return PutFileResponseType
 }
 
-func NewPutFileResponseHolder(status int) Holder {
-	payload := PutFileResponse{Status: status}
-	return Holder{
-		PayloadType:   payload.GetResponseType(),
-		PayloadStruct: payload,
-	}
+func (res *PutFileResponse) GetResponseType() TypeName {
+	return res.GetType()
 }
 
 type DeleteFileRequest struct {
 	FileName string
 }
 
-func (req *DeleteFileRequest) GetRequestType() TypeName {
+func (req *DeleteFileRequest) GetType() TypeName {
 	return DeleteFileRequestType
 }
 
-func NewDeleteFileRequestHolder(filename string) Holder {
-	payload := DeleteFileRequest{FileName: filename}
-	return Holder{
-		PayloadType:   payload.GetRequestType(),
-		PayloadStruct: payload,
-	}
+func (req *DeleteFileRequest) GetRequestType() TypeName {
+	return req.GetType()
 }
 
 type DeleteFileResponse struct {
 	Status int
 }
 
-func (res *DeleteFileResponse) GetResponseType() TypeName {
+func (res *DeleteFileResponse) GetType() TypeName {
 	return DeleteFileResponseType
 }
 
-func NewDeleteFileResponseHolder(status int) Holder {
-	payload := DeleteFileResponse{Status: status}
-	return Holder{
-		PayloadType:   payload.GetResponseType(),
-		PayloadStruct: payload,
-	}
+func (res *DeleteFileResponse) GetResponseType() TypeName {
+	return res.GetType()
 }

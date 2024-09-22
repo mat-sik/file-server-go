@@ -7,27 +7,24 @@ import (
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
 )
 
-func GetFile(ctx context.Context, s state.ConnectionState, req message.GetFileRequest) error {
-	writer := s.Conn
-	headerBuffer := s.HeaderBuffer
+func GetFile(s state.ConnectionState, req *message.GetFileRequest) (message.Response, error) {
 	messageBuffer := s.Buffer
-
 	filename := req.Filename
 
-	return service.GetFile(ctx, writer, headerBuffer, messageBuffer, filename)
+	return service.HandleGetFileRequest(messageBuffer, filename)
 }
 
-func PutFile(ctx context.Context, s state.ConnectionState, req message.PutFileRequest) (message.Holder, error) {
+func PutFile(ctx context.Context, s state.ConnectionState, req *message.PutFileRequest) (message.Response, error) {
 	writer := s.Conn
 	buffer := s.Buffer
 
 	filename := req.FileName
 	fileSize := req.Size
 
-	return service.PutFile(ctx, writer, buffer, filename, fileSize)
+	return service.HandlePutFileRequest(ctx, writer, buffer, filename, fileSize)
 }
 
-func DeleteFile(req message.DeleteFileRequest) (message.Holder, error) {
+func DeleteFile(req *message.DeleteFileRequest) (message.Response, error) {
 	filename := req.FileName
-	return service.DeleteFile(filename)
+	return service.HandleDeleteFileRequest(filename)
 }

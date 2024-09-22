@@ -14,15 +14,15 @@ func SendMessage(
 	writer io.Writer,
 	headerBuffer []byte,
 	messageBuffer *bytes.Buffer,
-	holder *message.Holder,
+	m message.Message,
 ) error {
 	encoder := json.NewEncoder(messageBuffer)
-	if err := encoder.Encode(holder.PayloadStruct); err != nil {
+	if err := encoder.Encode(m); err != nil {
 		return err
 	}
 
 	messageSize := uint32(messageBuffer.Len())
-	messageType := holder.PayloadType
+	messageType := m.GetType()
 	header := mheader.MessageHeader{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
@@ -44,32 +44,29 @@ func ReceiveMessage(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
-) (message.Holder, error) {
+) (message.Message, error) {
 	if err := ensureBuffered(ctx, reader, buffer, mheader.HeaderSize); err != nil {
-		return message.Holder{}, err
+		return nil, err
 	}
 
 	header := mheader.DecodeHeader(buffer)
 
 	toRead := header.PayloadSize - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
-		return message.Holder{}, err
+		return nil, err
 	}
 
-	payload, err := message.TypeNameConverter(header.PayloadType)
+	m, err := message.TypeNameConverter(header.PayloadType)
 	if err != nil {
-		return message.Holder{}, err
+		return nil, err
 	}
 
 	decoder := json.NewDecoder(buffer)
-	if err = decoder.Decode(payload); err != nil {
-		return message.Holder{}, err
+	if err = decoder.Decode(m); err != nil {
+		return nil, err
 	}
 
-	return message.Holder{
-		PayloadType:   header.PayloadType,
-		PayloadStruct: payload,
-	}, nil
+	return m, nil
 }
 
 func ensureBuffered(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) error {
