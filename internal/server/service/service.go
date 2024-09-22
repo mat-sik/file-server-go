@@ -38,7 +38,7 @@ type StreamResponse struct {
 }
 
 func (res *StreamResponse) GetResponseType() message.TypeName {
-	return message.GetFileResponseType
+	return res.StructResponse.GetResponseType()
 }
 
 func HandlePutFileRequest(
