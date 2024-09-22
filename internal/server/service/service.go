@@ -37,6 +37,18 @@ type StreamResponse struct {
 	ToTransfer int
 }
 
+func (res *StreamResponse) GetMessage() message.Message {
+	return res.Response.(message.Message)
+}
+
+func (res *StreamResponse) GetFile() *os.File {
+	return res.File
+}
+
+func (res *StreamResponse) GetToTransfer() int {
+	return res.ToTransfer
+}
+
 func (res *StreamResponse) GetResponseType() message.ResponseTypeName {
 	return res.Response.GetResponseType()
 }
@@ -47,22 +59,7 @@ func (res *StreamResponse) Stream(
 	headerBuffer []byte,
 	messageBuffer *bytes.Buffer,
 ) error {
-	file := res.File
-	defer safeFileClose(file)
-
-	m := res.Response.(message.Message)
-	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
-		return err
-	}
-
-	toTransfer := res.ToTransfer
-	return transfer.Stream(ctx, file, writer, messageBuffer, toTransfer)
-}
-
-func safeFileClose(f *os.File) {
-	if err := f.Close(); err != nil {
-		panic(err)
-	}
+	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, res)
 }
 
 func HandlePutFileRequest(
