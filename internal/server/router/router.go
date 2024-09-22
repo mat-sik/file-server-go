@@ -74,7 +74,7 @@ func handleDeleteFile(s state.ConnectionState, m message.Message) error {
 		writer := s.Conn
 		headerBuffer := s.HeaderBuffer
 		messageBuffer := s.Buffer
-		return deliverSendRes(writer, headerBuffer, messageBuffer, res)
+		return deliverRes(writer, headerBuffer, messageBuffer, res)
 	}
 	if err := handleReq(req, controller.HandleDeleteFileRequest, deliverResFunc); err != nil {
 		return err
@@ -103,7 +103,7 @@ func deliverStreamRes(ctx context.Context, s state.ConnectionState, streamRes *s
 	buffer := s.Buffer
 
 	res := streamRes.StructResponse
-	if err := deliverSendRes(writer, headerBuffer, buffer, res); err != nil {
+	if err := deliverRes(writer, headerBuffer, buffer, res); err != nil {
 		return err
 	}
 
@@ -123,7 +123,7 @@ func closeReader(reader io.Reader) {
 	panic("reader is not closer")
 }
 
-func deliverSendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
+func deliverRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
 	m := res.(message.Message)
 	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
 		return err
