@@ -26,7 +26,7 @@ func HandlePutFileRequest(filename string) (message.Request, error) {
 	req := message.PutFileRequest{FileName: filename, Size: fileSize}
 	return &StreamRequest{
 		StructRequest: &req,
-		StreamWriter:  file,
+		Reader:        file,
 		ToTransfer:    fileSize,
 	}, nil
 }
@@ -37,8 +37,8 @@ func HandleDeleteFileRequest(filename string) (message.Request, error) {
 
 type StreamRequest struct {
 	StructRequest message.Request
-	StreamWriter  io.Writer
-	ToTransfer    int
+	io.Reader
+	ToTransfer int
 }
 
 func (req *StreamRequest) GetRequestType() message.TypeName {
