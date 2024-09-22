@@ -95,6 +95,9 @@ func handleReq[T message.Request](
 }
 
 func handleStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
+	reader := streamRes.StreamReader
+	defer closeReader(reader)
+
 	var writer io.Writer = s.Conn
 	headerBuffer := s.HeaderBuffer
 	buffer := s.Buffer
@@ -104,12 +107,20 @@ func handleStreamRes(ctx context.Context, s state.ConnectionState, streamRes *se
 		return err
 	}
 
-	reader := streamRes.StreamReader
 	toTransfer := streamRes.ToTransfer
 	if err := transfer.Stream(ctx, reader, writer, buffer, toTransfer); err != nil {
 		return err
 	}
 	return nil
+}
+
+func closeReader(reader io.Reader) {
+	if closer, ok := reader.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			panic(err)
+		}
+	}
+	panic("reader is not closer")
 }
 
 func handleSendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
