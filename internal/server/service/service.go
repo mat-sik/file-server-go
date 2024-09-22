@@ -28,13 +28,13 @@ func HandleGetFileRequest(messageBuffer *bytes.Buffer, filename string) (message
 
 	fileSize := int(fileInfo.Size())
 	res := message.GetFileResponse{Status: 200, Size: fileSize}
-	return &StreamResponse{StructResponse: &res, StreamReader: file, ToTransfer: fileSize}, nil
+	return &StreamResponse{StructResponse: &res, Reader: file, ToTransfer: fileSize}, nil
 }
 
 type StreamResponse struct {
 	StructResponse message.Response
-	StreamReader   io.Reader
-	ToTransfer     int
+	io.Reader
+	ToTransfer int
 }
 
 func (res *StreamResponse) GetResponseType() message.TypeName {

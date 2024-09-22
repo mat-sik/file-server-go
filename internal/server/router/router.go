@@ -95,7 +95,7 @@ func handleReq[T message.Request](
 }
 
 func deliverStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
-	reader := streamRes.StreamReader
+	reader := streamRes.Reader
 	defer closeReader(reader)
 
 	var writer io.Writer = s.Conn
