@@ -47,9 +47,9 @@ const (
 type ResponseTypeName TypeName
 
 const (
-	GetFileResponseType    = RequestTypeName(GetFileResponseTypeNum)
-	PutFileResponseType    = RequestTypeName(PutFileResponseTypeNum)
-	DeleteFileResponseType = RequestTypeName(DeleteFileResponseTypeNum)
+	GetFileResponseType    = ResponseTypeName(GetFileResponseTypeNum)
+	PutFileResponseType    = ResponseTypeName(PutFileResponseTypeNum)
+	DeleteFileResponseType = ResponseTypeName(DeleteFileResponseTypeNum)
 )
 
 func TypeNameConverter(typeName TypeName) (Message, error) {
