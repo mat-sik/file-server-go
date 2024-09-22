@@ -1,47 +1,70 @@
 package message
 
 import (
+	"bytes"
+	"context"
 	"errors"
+	"io"
 )
 
 type Message interface {
 	GetType() TypeName
 }
 
+type StreamableMessage interface {
+	Stream(ctx context.Context, writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer) error
+}
+
 type Request interface {
-	GetRequestType() TypeName
+	GetRequestType() RequestTypeName
 }
 
 type Response interface {
-	GetResponseType() TypeName
+	GetResponseType() ResponseTypeName
 }
 
 type TypeName uint64
 
 const (
-	GetFileRequestType TypeName = iota
-	GetFileResponseType
+	GetFileRequestTypeNum TypeName = iota
+	GetFileResponseTypeNum
 
-	PutFileRequestType
-	PutFileResponseType
+	PutFileRequestTypeNum
+	PutFileResponseTypeNum
 
-	DeleteFileRequestType
-	DeleteFileResponseType
+	DeleteFileRequestTypeNum
+	DeleteFileResponseTypeNum
+)
+
+type RequestTypeName TypeName
+
+const (
+	GetFileRequestType    = RequestTypeName(GetFileRequestTypeNum)
+	PutFileRequestType    = RequestTypeName(PutFileRequestTypeNum)
+	DeleteFileRequestType = RequestTypeName(DeleteFileRequestTypeNum)
+)
+
+type ResponseTypeName TypeName
+
+const (
+	GetFileResponseType    = RequestTypeName(GetFileResponseTypeNum)
+	PutFileResponseType    = RequestTypeName(PutFileResponseTypeNum)
+	DeleteFileResponseType = RequestTypeName(DeleteFileResponseTypeNum)
 )
 
 func TypeNameConverter(typeName TypeName) (Message, error) {
 	switch typeName {
-	case GetFileRequestType:
+	case GetFileRequestTypeNum:
 		return &GetFileRequest{}, nil
-	case GetFileResponseType:
+	case GetFileResponseTypeNum:
 		return &GetFileResponse{}, nil
-	case PutFileRequestType:
+	case PutFileRequestTypeNum:
 		return &PutFileRequest{}, nil
-	case PutFileResponseType:
+	case PutFileResponseTypeNum:
 		return &PutFileResponse{}, nil
-	case DeleteFileRequestType:
+	case DeleteFileRequestTypeNum:
 		return &DeleteFileRequest{}, nil
-	case DeleteFileResponseType:
+	case DeleteFileResponseTypeNum:
 		return &DeleteFileResponse{}, nil
 	default:
 		return nil, errors.New("unknown type")
@@ -53,11 +76,11 @@ type GetFileRequest struct {
 }
 
 func (req *GetFileRequest) GetType() TypeName {
-	return GetFileResponseType
+	return GetFileResponseTypeNum
 }
 
-func (req *GetFileRequest) GetRequestType() TypeName {
-	return req.GetType()
+func (req *GetFileRequest) GetRequestType() RequestTypeName {
+	return RequestTypeName(req.GetType())
 }
 
 type GetFileResponse struct {
@@ -66,11 +89,11 @@ type GetFileResponse struct {
 }
 
 func (res *GetFileResponse) GetType() TypeName {
-	return GetFileRequestType
+	return GetFileRequestTypeNum
 }
 
-func (res *GetFileResponse) GetResponseType() TypeName {
-	return res.GetType()
+func (res *GetFileResponse) GetResponseType() ResponseTypeName {
+	return ResponseTypeName(res.GetType())
 }
 
 type PutFileRequest struct {
@@ -79,11 +102,11 @@ type PutFileRequest struct {
 }
 
 func (req *PutFileRequest) GetType() TypeName {
-	return PutFileRequestType
+	return PutFileRequestTypeNum
 }
 
-func (req *PutFileRequest) GetRequestType() TypeName {
-	return req.GetType()
+func (req *PutFileRequest) GetRequestType() RequestTypeName {
+	return RequestTypeName(req.GetType())
 }
 
 type PutFileResponse struct {
@@ -91,11 +114,11 @@ type PutFileResponse struct {
 }
 
 func (res *PutFileResponse) GetType() TypeName {
-	return PutFileResponseType
+	return PutFileResponseTypeNum
 }
 
-func (res *PutFileResponse) GetResponseType() TypeName {
-	return res.GetType()
+func (res *PutFileResponse) GetResponseType() ResponseTypeName {
+	return ResponseTypeName(res.GetType())
 }
 
 type DeleteFileRequest struct {
@@ -103,11 +126,11 @@ type DeleteFileRequest struct {
 }
 
 func (req *DeleteFileRequest) GetType() TypeName {
-	return DeleteFileRequestType
+	return DeleteFileRequestTypeNum
 }
 
-func (req *DeleteFileRequest) GetRequestType() TypeName {
-	return req.GetType()
+func (req *DeleteFileRequest) GetRequestType() RequestTypeName {
+	return RequestTypeName(req.GetType())
 }
 
 type DeleteFileResponse struct {
@@ -115,9 +138,9 @@ type DeleteFileResponse struct {
 }
 
 func (res *DeleteFileResponse) GetType() TypeName {
-	return DeleteFileResponseType
+	return DeleteFileResponseTypeNum
 }
 
-func (res *DeleteFileResponse) GetResponseType() TypeName {
-	return res.GetType()
+func (res *DeleteFileResponse) GetResponseType() ResponseTypeName {
+	return ResponseTypeName(res.GetType())
 }
