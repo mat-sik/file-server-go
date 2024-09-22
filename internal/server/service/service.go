@@ -59,8 +59,8 @@ func (res *StreamResponse) Stream(
 	return transfer.Stream(ctx, file, writer, messageBuffer, toTransfer)
 }
 
-func safeFileClose(file *os.File) {
-	if err := file.Close(); err != nil {
+func safeFileClose(f *os.File) {
+	if err := f.Close(); err != nil {
 		panic(err)
 	}
 }
