@@ -31,7 +31,7 @@ func RouteRequest(ctx context.Context, s state.ConnectionState) error {
 			return err
 		}
 	case message.DeleteFileRequestType:
-		if err = handleDeleteFile(ctx, s, m); err != nil {
+		if err = handleDeleteFile(s, m); err != nil {
 			return err
 		}
 	default:
@@ -46,7 +46,7 @@ func handleGetFile(ctx context.Context, s state.ConnectionState, m message.Messa
 		return controller.HandleGetFileRequest(s, req)
 	}
 	handleStreamGetRes := func(res message.Response) error {
-		return streamRes(ctx, s, res.(*service.StreamResponse))
+		return handleStreamRes(ctx, s, res.(*service.StreamResponse))
 	}
 	if err := handleReq(req, handleGetReq, handleStreamGetRes); err != nil {
 		return err
@@ -60,7 +60,7 @@ func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Messa
 		return controller.HandlePutFileRequest(ctx, s, req)
 	}
 	handlePutRes := func(res message.Response) error {
-		return streamRes(ctx, s, res.(*service.StreamResponse))
+		return handleStreamRes(ctx, s, res.(*service.StreamResponse))
 	}
 	if err := handleReq(req, handlePutReq, handlePutRes); err != nil {
 		return err
@@ -68,10 +68,13 @@ func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Messa
 	return nil
 }
 
-func handleDeleteFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
+func handleDeleteFile(s state.ConnectionState, m message.Message) error {
 	req := m.(*message.DeleteFileRequest)
 	handleDelRes := func(res message.Response) error {
-		return streamRes(ctx, s, res.(*service.StreamResponse))
+		writer := s.Conn
+		headerBuffer := s.HeaderBuffer
+		messageBuffer := s.Buffer
+		return handleSendRes(writer, headerBuffer, messageBuffer, res)
 	}
 	if err := handleReq(req, controller.HandleDeleteFileRequest, handleDelRes); err != nil {
 		return err
@@ -91,13 +94,13 @@ func handleReq[T message.Request](
 	return handleRes(res)
 }
 
-func streamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
+func handleStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
 	var writer io.Writer = s.Conn
 	headerBuffer := s.HeaderBuffer
 	buffer := s.Buffer
 
 	res := streamRes.StructResponse
-	if err := sendRes(writer, headerBuffer, buffer, res); err != nil {
+	if err := handleSendRes(writer, headerBuffer, buffer, res); err != nil {
 		return err
 	}
 
@@ -109,7 +112,7 @@ func streamRes(ctx context.Context, s state.ConnectionState, streamRes *service.
 	return nil
 }
 
-func sendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
+func handleSendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
 	m := res.(message.Message)
 	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
 		return err
