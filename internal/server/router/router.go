@@ -55,10 +55,7 @@ func DeliverResponse(ctx context.Context, s state.ConnectionState, res message.R
 
 	switch res.GetResponseType() {
 	case message.GetFileResponseType:
-		if err := streamResponse(ctx, s, res); err != nil {
-			return err
-		}
-		return nil
+		return streamResponse(ctx, s, res)
 	default:
 		return sendResponse(s, res)
 	}
