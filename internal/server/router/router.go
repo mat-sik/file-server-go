@@ -1,136 +1,90 @@
 package router
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/server/controller"
-	"github.com/mat-sik/file-server-go/internal/server/service"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
 	"io"
 	"time"
 )
 
-func RouteRequest(ctx context.Context, s state.ConnectionState) error {
+func HandleRequest(ctx context.Context, s state.ConnectionState) error {
+	conn := s.Conn
+	buffer := s.Buffer
+
+	m, err := transfer.ReceiveMessage(ctx, conn, buffer)
+	if err != nil {
+		return err
+	}
+
+	req, ok := m.(message.Request)
+	if !ok {
+		return ErrExpectedRequest
+	}
+
+	res, err := RouteRequest(ctx, s, req)
+	if err != nil {
+		return err
+	}
+
+	return DeliverResponse(ctx, s, res)
+}
+
+func RouteRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	m, err := transfer.ReceiveMessage(ctx, s.Conn, s.Buffer)
-	if err != nil {
-		return err
-	}
-	switch m.GetType() {
+	switch req.GetRequestType() {
 	case message.GetFileRequestType:
-		if err = handleGetFile(ctx, s, m); err != nil {
-			return err
-		}
-	case message.PutFileRequestType:
-		if err = handlePutFile(ctx, s, m); err != nil {
-			return err
-		}
-	case message.DeleteFileRequestType:
-		if err = handleDeleteFile(s, m); err != nil {
-			return err
-		}
-	default:
-		return ErrUnexpectedRequestType
-	}
-	return nil
-}
-
-func handleGetFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
-	req := m.(*message.GetFileRequest)
-	handleReqFunc := func(req *message.GetFileRequest) (message.Response, error) {
 		return controller.HandleGetFileRequest(s, req)
-	}
-	deliverResFunc := func(res message.Response) error {
-		return deliverStreamRes(ctx, s, res.(*service.StreamResponse))
-	}
-	if err := handleReq(req, handleReqFunc, deliverResFunc); err != nil {
-		return err
-	}
-	return nil
-}
-
-func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
-	req := m.(*message.PutFileRequest)
-	handleReqFunc := func(req *message.PutFileRequest) (message.Response, error) {
+	case message.PutFileRequestType:
 		return controller.HandlePutFileRequest(ctx, s, req)
+	case message.DeleteFileRequestType:
+		return controller.HandleDeleteFileRequest(req)
+	default:
+		return nil, ErrUnexpectedRequestType
 	}
-	deliverResFunc := func(res message.Response) error {
-		return deliverStreamRes(ctx, s, res.(*service.StreamResponse))
-	}
-	if err := handleReq(req, handleReqFunc, deliverResFunc); err != nil {
-		return err
-	}
-	return nil
 }
 
-func handleDeleteFile(s state.ConnectionState, m message.Message) error {
-	req := m.(*message.DeleteFileRequest)
-	deliverResFunc := func(res message.Response) error {
-		writer := s.Conn
-		headerBuffer := s.HeaderBuffer
-		messageBuffer := s.Buffer
-		return deliverRes(writer, headerBuffer, messageBuffer, res)
+func DeliverResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
+	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
+	defer cancel()
+
+	switch res.GetResponseType() {
+	case message.GetFileResponseType:
+		if err := streamResponse(ctx, s, res); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return sendResponse(s, res)
 	}
-	if err := handleReq(req, controller.HandleDeleteFileRequest, deliverResFunc); err != nil {
-		return err
-	}
-	return nil
 }
 
-func handleReq[T message.Request](
-	req T,
-	handleReq func(T) (message.Response, error),
-	handleRes func(message.Response) error,
-) error {
-	res, err := handleReq(req)
-	if err != nil {
-		return err
-	}
-	return handleRes(res)
-}
-
-func deliverStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
-	reader := streamRes.Reader
-	defer closeReader(reader)
+func streamResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
+	streamRes := res.(message.StreamableMessage)
 
 	var writer io.Writer = s.Conn
 	headerBuffer := s.HeaderBuffer
-	buffer := s.Buffer
-
-	res := streamRes.StructResponse
-	if err := deliverRes(writer, headerBuffer, buffer, res); err != nil {
-		return err
-	}
-
-	toTransfer := streamRes.ToTransfer
-	if err := transfer.Stream(ctx, reader, writer, buffer, toTransfer); err != nil {
-		return err
-	}
-	return nil
+	messageBuffer := s.Buffer
+	return streamRes.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
-func closeReader(reader io.Reader) {
-	if closer, ok := reader.(io.Closer); ok {
-		if err := closer.Close(); err != nil {
-			panic(err)
-		}
-	}
-	panic("reader is not closer")
-}
-
-func deliverRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
+func sendResponse(s state.ConnectionState, res message.Response) error {
 	m := res.(message.Message)
-	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
-		return err
-	}
-	return nil
+
+	var writer io.Writer = s.Conn
+	headerBuffer := s.HeaderBuffer
+	messageBuffer := s.Buffer
+	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
 }
 
 const timeForRequest = 5 * time.Second
 
-var ErrUnexpectedRequestType = errors.New("unexpected request type")
+var (
+	ErrUnexpectedRequestType = errors.New("unexpected request type")
+	ErrExpectedRequest       = errors.New("expected request, received different type")
+)

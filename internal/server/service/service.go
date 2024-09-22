@@ -28,17 +28,41 @@ func HandleGetFileRequest(messageBuffer *bytes.Buffer, filename string) (message
 
 	fileSize := int(fileInfo.Size())
 	res := message.GetFileResponse{Status: 200, Size: fileSize}
-	return &StreamResponse{StructResponse: &res, Reader: file, ToTransfer: fileSize}, nil
+	return &StreamResponse{Response: &res, File: file, ToTransfer: fileSize}, nil
 }
 
 type StreamResponse struct {
-	StructResponse message.Response
-	io.Reader
+	message.Response
+	*os.File
 	ToTransfer int
 }
 
-func (res *StreamResponse) GetResponseType() message.TypeName {
-	return res.StructResponse.GetResponseType()
+func (res *StreamResponse) GetResponseType() message.ResponseTypeName {
+	return res.Response.GetResponseType()
+}
+
+func (res *StreamResponse) Stream(
+	ctx context.Context,
+	writer io.Writer,
+	headerBuffer []byte,
+	messageBuffer *bytes.Buffer,
+) error {
+	file := res.File
+	defer safeFileClose(file)
+
+	m := res.Response.(message.Message)
+	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
+		return err
+	}
+
+	toTransfer := res.ToTransfer
+	return transfer.Stream(ctx, file, writer, messageBuffer, toTransfer)
+}
+
+func safeFileClose(file *os.File) {
+	if err := file.Close(); err != nil {
+		panic(err)
+	}
 }
 
 func HandlePutFileRequest(
