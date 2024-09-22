@@ -12,6 +12,7 @@ import (
 func DeliverRequest(ctx context.Context, s state.ConnectionState, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
+
 	switch req.GetRequestType() {
 	case message.PutFileRequestType:
 		return streamRequest(ctx, s, req)
