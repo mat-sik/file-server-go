@@ -42,13 +42,13 @@ func RouteRequest(ctx context.Context, s state.ConnectionState) error {
 
 func handleGetFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
 	req := m.(*message.GetFileRequest)
-	handleGetReq := func(req *message.GetFileRequest) (message.Response, error) {
+	handleReqFunc := func(req *message.GetFileRequest) (message.Response, error) {
 		return controller.HandleGetFileRequest(s, req)
 	}
-	handleStreamGetRes := func(res message.Response) error {
-		return handleStreamRes(ctx, s, res.(*service.StreamResponse))
+	deliverResFunc := func(res message.Response) error {
+		return deliverStreamRes(ctx, s, res.(*service.StreamResponse))
 	}
-	if err := handleReq(req, handleGetReq, handleStreamGetRes); err != nil {
+	if err := handleReq(req, handleReqFunc, deliverResFunc); err != nil {
 		return err
 	}
 	return nil
@@ -56,13 +56,13 @@ func handleGetFile(ctx context.Context, s state.ConnectionState, m message.Messa
 
 func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Message) error {
 	req := m.(*message.PutFileRequest)
-	handlePutReq := func(req *message.PutFileRequest) (message.Response, error) {
+	handleReqFunc := func(req *message.PutFileRequest) (message.Response, error) {
 		return controller.HandlePutFileRequest(ctx, s, req)
 	}
-	handlePutRes := func(res message.Response) error {
-		return handleStreamRes(ctx, s, res.(*service.StreamResponse))
+	deliverResFunc := func(res message.Response) error {
+		return deliverStreamRes(ctx, s, res.(*service.StreamResponse))
 	}
-	if err := handleReq(req, handlePutReq, handlePutRes); err != nil {
+	if err := handleReq(req, handleReqFunc, deliverResFunc); err != nil {
 		return err
 	}
 	return nil
@@ -70,13 +70,13 @@ func handlePutFile(ctx context.Context, s state.ConnectionState, m message.Messa
 
 func handleDeleteFile(s state.ConnectionState, m message.Message) error {
 	req := m.(*message.DeleteFileRequest)
-	handleDelRes := func(res message.Response) error {
+	deliverResFunc := func(res message.Response) error {
 		writer := s.Conn
 		headerBuffer := s.HeaderBuffer
 		messageBuffer := s.Buffer
-		return handleSendRes(writer, headerBuffer, messageBuffer, res)
+		return deliverSendRes(writer, headerBuffer, messageBuffer, res)
 	}
-	if err := handleReq(req, controller.HandleDeleteFileRequest, handleDelRes); err != nil {
+	if err := handleReq(req, controller.HandleDeleteFileRequest, deliverResFunc); err != nil {
 		return err
 	}
 	return nil
@@ -94,7 +94,7 @@ func handleReq[T message.Request](
 	return handleRes(res)
 }
 
-func handleStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
+func deliverStreamRes(ctx context.Context, s state.ConnectionState, streamRes *service.StreamResponse) error {
 	reader := streamRes.StreamReader
 	defer closeReader(reader)
 
@@ -103,7 +103,7 @@ func handleStreamRes(ctx context.Context, s state.ConnectionState, streamRes *se
 	buffer := s.Buffer
 
 	res := streamRes.StructResponse
-	if err := handleSendRes(writer, headerBuffer, buffer, res); err != nil {
+	if err := deliverSendRes(writer, headerBuffer, buffer, res); err != nil {
 		return err
 	}
 
@@ -123,7 +123,7 @@ func closeReader(reader io.Reader) {
 	panic("reader is not closer")
 }
 
-func handleSendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
+func deliverSendRes(writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer, res message.Response) error {
 	m := res.(message.Message)
 	if err := transfer.SendMessage(writer, headerBuffer, messageBuffer, m); err != nil {
 		return err
