@@ -34,10 +34,6 @@ func HandlePutFileRequest(filename string) (message.Request, error) {
 	}, nil
 }
 
-func HandleDeleteFileRequest(filename string) (message.Request, error) {
-	return &message.DeleteFileRequest{FileName: filename}, nil
-}
-
 type StreamRequest struct {
 	message.Request
 	*os.File
@@ -67,4 +63,8 @@ func (req *StreamRequest) Stream(
 	messageBuffer *bytes.Buffer,
 ) error {
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, req)
+}
+
+func HandleDeleteFileRequest(filename string) (message.Request, error) {
+	return &message.DeleteFileRequest{FileName: filename}, nil
 }
