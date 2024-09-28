@@ -10,9 +10,7 @@ import (
 	"os"
 )
 
-func HandleGetFileRequest(messageBuffer *bytes.Buffer, filename string) (message.Response, error) {
-	defer messageBuffer.Reset()
-
+func HandleGetFileRequest(filename string) (message.Response, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if errors.Is(err, os.ErrNotExist) {
 		return &message.GetFileResponse{Status: 404, Size: 0}, err

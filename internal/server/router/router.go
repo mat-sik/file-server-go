@@ -34,12 +34,15 @@ func HandleRequest(ctx context.Context, s state.ConnectionState) error {
 }
 
 func RouteRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
+	buffer := s.Buffer
+	defer buffer.Reset()
+
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
 	switch req.GetRequestType() {
 	case message.GetFileRequestType:
-		return controller.HandleGetFileRequest(s, req)
+		return controller.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
 		return controller.HandlePutFileRequest(ctx, s, req)
 	case message.DeleteFileRequestType:

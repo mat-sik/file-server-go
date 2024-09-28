@@ -7,13 +7,11 @@ import (
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
 )
 
-func HandleGetFileRequest(s state.ConnectionState, req message.Request) (message.Response, error) {
+func HandleGetFileRequest(req message.Request) (message.Response, error) {
 	getFileReq := req.(*message.GetFileRequest)
 	filename := getFileReq.Filename
 
-	messageBuffer := s.Buffer
-
-	return service.HandleGetFileRequest(messageBuffer, filename)
+	return service.HandleGetFileRequest(filename)
 }
 
 func HandlePutFileRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
