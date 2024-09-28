@@ -12,16 +12,9 @@ import (
 )
 
 func HandleRequest(ctx context.Context, s state.ConnectionState) error {
-	var reader io.Reader = s.Conn
-	buffer := s.Buffer
-	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
+	req, err := receiveRequest(ctx, s)
 	if err != nil {
 		return err
-	}
-
-	req, ok := m.(message.Request)
-	if !ok {
-		return ErrExpectedRequest
 	}
 
 	res, err := routeRequest(ctx, s, req)
@@ -30,6 +23,21 @@ func HandleRequest(ctx context.Context, s state.ConnectionState) error {
 	}
 
 	return deliverResponse(ctx, s, res)
+}
+
+func receiveRequest(ctx context.Context, s state.ConnectionState) (message.Request, error) {
+	var reader io.Reader = s.Conn
+	buffer := s.Buffer
+	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	req, ok := m.(message.Request)
+	if !ok {
+		return nil, ErrExpectedRequest
+	}
+	return req, nil
 }
 
 func routeRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
