@@ -16,6 +16,8 @@ func SendMessage(
 	messageBuffer *bytes.Buffer,
 	m message.Message,
 ) error {
+	defer messageBuffer.Reset()
+
 	encoder := json.NewEncoder(messageBuffer)
 	if err := encoder.Encode(m); err != nil {
 		return err
