@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/server/service"
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
 )
 
@@ -11,7 +10,7 @@ func HandleGetFileRequest(req message.Request) (message.Response, error) {
 	getFileReq := req.(*message.GetFileRequest)
 	filename := getFileReq.Filename
 
-	return service.HandleGetFileRequest(filename)
+	return handleGetFileRequest(filename)
 }
 
 func HandlePutFileRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
@@ -22,11 +21,11 @@ func HandlePutFileRequest(ctx context.Context, s state.ConnectionState, req mess
 	writer := s.Conn
 	buffer := s.Buffer
 
-	return service.HandlePutFileRequest(ctx, writer, buffer, filename, fileSize)
+	return handlePutFileRequest(ctx, writer, buffer, filename, fileSize)
 }
 
 func HandleDeleteFileRequest(req message.Request) (message.Response, error) {
 	deleteFileReq := req.(*message.DeleteFileRequest)
 	filename := deleteFileReq.FileName
-	return service.HandleDeleteFileRequest(filename)
+	return handleDeleteFileRequest(filename)
 }

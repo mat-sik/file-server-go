@@ -1,4 +1,4 @@
-package service
+package controller
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func HandleGetFileRequest(filename string) (message.Response, error) {
+func handleGetFileRequest(filename string) (message.Response, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if errors.Is(err, os.ErrNotExist) {
 		return &message.GetFileResponse{Status: 404, Size: 0}, err
@@ -60,7 +60,7 @@ func (res *StreamResponse) Stream(
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, res)
 }
 
-func HandlePutFileRequest(
+func handlePutFileRequest(
 	ctx context.Context,
 	writer io.Writer,
 	buffer *bytes.Buffer,
@@ -81,7 +81,7 @@ func HandlePutFileRequest(
 	return &message.PutFileResponse{Status: 200}, nil
 }
 
-func HandleDeleteFileRequest(filename string) (message.Response, error) {
+func handleDeleteFileRequest(filename string) (message.Response, error) {
 	err := os.Remove(filename)
 	if err != nil {
 		return nil, err
