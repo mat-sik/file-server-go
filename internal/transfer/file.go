@@ -21,6 +21,8 @@ func StreamFromFile(
 	messageBuffer *bytes.Buffer,
 	streamable FileStreamableMessage,
 ) error {
+	defer messageBuffer.Reset()
+
 	file := streamable.GetFile()
 	defer safeFileClose(file)
 
