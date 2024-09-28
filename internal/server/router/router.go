@@ -24,15 +24,15 @@ func HandleRequest(ctx context.Context, s state.ConnectionState) error {
 		return ErrExpectedRequest
 	}
 
-	res, err := RouteRequest(ctx, s, req)
+	res, err := routeRequest(ctx, s, req)
 	if err != nil {
 		return err
 	}
 
-	return DeliverResponse(ctx, s, res)
+	return deliverResponse(ctx, s, res)
 }
 
-func RouteRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
+func routeRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
 	buffer := s.Buffer
 	defer buffer.Reset()
 
@@ -51,7 +51,7 @@ func RouteRequest(ctx context.Context, s state.ConnectionState, req message.Requ
 	}
 }
 
-func DeliverResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
+func deliverResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
