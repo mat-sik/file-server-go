@@ -12,10 +12,9 @@ import (
 )
 
 func HandleRequest(ctx context.Context, s state.ConnectionState) error {
-	conn := s.Conn
+	var reader io.Reader = s.Conn
 	buffer := s.Buffer
-
-	m, err := transfer.ReceiveMessage(ctx, conn, buffer)
+	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
 	if err != nil {
 		return err
 	}
