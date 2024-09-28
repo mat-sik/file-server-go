@@ -17,23 +17,40 @@ func HandleRequest(ctx context.Context, s state.ConnectionState, req message.Req
 		return err
 	}
 
-	var reader io.Reader = s.Conn
-	buffer := s.Buffer
-	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
+	enrichFunc := func(res message.Response) message.Response {
+		return enrichGetFileResponse(res, req)
+	}
+
+	res, err := receiveResponse(ctx, s, enrichFunc)
 	if err != nil {
 		return err
 	}
 
+	return handleResponse(ctx, s, res)
+}
+
+func receiveResponse(
+	ctx context.Context,
+	s state.ConnectionState,
+	enrichFunc func(message.Response) message.Response,
+) (message.Response, error) {
+	var reader io.Reader = s.Conn
+	buffer := s.Buffer
+	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
+	if err != nil {
+		return nil, err
+	}
+
 	res, ok := m.(message.Response)
 	if !ok {
-		return ErrExpectedResponse
+		return nil, ErrExpectedResponse
 	}
 
 	if res.GetResponseType() == message.GetFileResponseType {
-		res = enrichGetFileResponse(res, req)
+		res = enrichFunc(res)
 	}
 
-	return handleResponse(ctx, s, res)
+	return res, nil
 }
 
 func enrichGetFileResponse(res message.Response, req message.Request) message.Response {
