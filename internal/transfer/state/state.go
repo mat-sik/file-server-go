@@ -13,7 +13,7 @@ type ConnectionState struct {
 }
 
 func NewConnectionState(conn net.Conn) ConnectionState {
-	buffer := bytes.NewBuffer(make([]byte, 4*1024))
+	buffer := bytes.NewBuffer(make([]byte, 0, 4*1024))
 	headerBuffer := make([]byte, mheader.HeaderSize)
 	return ConnectionState{
 		Conn:         conn,
