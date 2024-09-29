@@ -3,7 +3,7 @@ package router
 import (
 	"context"
 	"errors"
-	"fmt"
+	"github.com/mat-sik/file-server-go/internal/client/resenricher"
 	"github.com/mat-sik/file-server-go/internal/client/reshandler"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
@@ -18,7 +18,7 @@ func HandleRequest(ctx context.Context, s state.ConnectionState, req message.Req
 	}
 
 	enrichRes := func(res message.Response) message.Response {
-		return enrichGetFileResponse(res, req)
+		return resenricher.EnrichGetFileResponse(res, req)
 	}
 
 	res, err := receiveResponse(ctx, s, enrichRes)
@@ -51,26 +51,6 @@ func receiveResponse(
 	}
 
 	return res, nil
-}
-
-func enrichGetFileResponse(res message.Response, req message.Request) message.Response {
-	getFileRequest, ok := req.(*message.GetFileRequest)
-	if !ok {
-		panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
-	}
-	filename := getFileRequest.Filename
-
-	getFileResponse := res.(*message.GetFileResponse)
-
-	return EnrichedGetFileResponse{
-		Response: getFileResponse,
-		Filename: filename,
-	}
-}
-
-type EnrichedGetFileResponse struct {
-	message.Response
-	Filename string
 }
 
 func deliverRequest(ctx context.Context, s state.ConnectionState, req message.Request) error {

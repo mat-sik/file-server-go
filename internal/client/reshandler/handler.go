@@ -3,7 +3,7 @@ package reshandler
 import (
 	"context"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/router"
+	"github.com/mat-sik/file-server-go/internal/client/resenricher"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer/state"
 	"io"
@@ -13,7 +13,7 @@ func HandelGetFileResponse(ctx context.Context, s state.ConnectionState, res mes
 	buffer := s.Buffer
 	defer buffer.Reset()
 
-	enrichedGetFileResponse := res.(*router.EnrichedGetFileResponse)
+	enrichedGetFileResponse := res.(*resenricher.EnrichedGetFileResponse)
 	getFileResponse := enrichedGetFileResponse.Response.(*message.GetFileResponse)
 
 	status := getFileResponse.Status
