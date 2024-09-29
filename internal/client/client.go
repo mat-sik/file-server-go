@@ -9,7 +9,7 @@ import (
 )
 
 func RunClient(ctx context.Context, hostname string) error {
-	conn, err := net.Dial("tcp", hostname)
+	conn, err := net.Dial("tcp4", hostname)
 	if err != nil {
 		return err
 	}
