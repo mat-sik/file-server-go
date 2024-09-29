@@ -12,11 +12,11 @@ func main() {
 	opts := args[1]
 	ctx := context.Background()
 	if opts == "server" {
-		if err := server.RunServer(ctx, 10000); err != nil {
+		if err := server.RunServer(ctx, 44696); err != nil {
 			panic(err)
 		}
 	} else {
-		if err := client.RunClient(ctx, "localhost:10000"); err != nil {
+		if err := client.RunClient(ctx, ":44696"); err != nil {
 			panic(err)
 		}
 	}
