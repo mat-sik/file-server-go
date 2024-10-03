@@ -14,7 +14,7 @@ func EnrichGetFileResponse(res message.Response, req message.Request) message.Re
 
 	getFileResponse := res.(*message.GetFileResponse)
 
-	return EnrichedGetFileResponse{
+	return &EnrichedGetFileResponse{
 		Response: getFileResponse,
 		Filename: fileName,
 	}
