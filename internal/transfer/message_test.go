@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"io"
@@ -25,8 +24,7 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	messageBuffer.Reset()
 
 	var readSocket io.Reader = buffer
-	ctx := context.Background()
-	out, err := ReceiveMessage(ctx, readSocket, messageBuffer)
+	out, err := ReceiveMessage(readSocket, messageBuffer)
 	if err != nil {
 		t.Fatal(err)
 	}

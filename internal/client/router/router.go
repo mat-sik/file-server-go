@@ -21,7 +21,7 @@ func HandleRequest(ctx context.Context, s state.ConnectionState, req message.Req
 		return resenricher.EnrichGetFileResponse(res, req)
 	}
 
-	res, err := receiveResponse(ctx, s, enrichRes)
+	res, err := receiveResponse(s, enrichRes)
 	if err != nil {
 		return err
 	}
@@ -30,13 +30,12 @@ func HandleRequest(ctx context.Context, s state.ConnectionState, req message.Req
 }
 
 func receiveResponse(
-	ctx context.Context,
 	s state.ConnectionState,
 	enrichRes func(message.Response) message.Response,
 ) (message.Response, error) {
 	var reader io.Reader = s.Conn
 	buffer := s.Buffer
-	m, err := transfer.ReceiveMessage(ctx, reader, buffer)
+	m, err := transfer.ReceiveMessage(reader, buffer)
 	if err != nil {
 		return nil, err
 	}

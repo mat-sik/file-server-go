@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
@@ -43,11 +42,10 @@ func SendMessage(
 }
 
 func ReceiveMessage(
-	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Message, error) {
-	if err := ensureBuffered(ctx, reader, buffer, mheader.HeaderSize); err != nil {
+	if err := ensureBuffered(reader, buffer, mheader.HeaderSize); err != nil {
 		return nil, err
 	}
 
@@ -71,31 +69,11 @@ func ReceiveMessage(
 	return m, nil
 }
 
-func ensureBuffered(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) error {
-	if buffer.Len() < min {
-		if _, err := readAtLeast(ctx, reader, buffer, min); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func readAtLeast(ctx context.Context, reader io.Reader, buffer *bytes.Buffer, min int) (int, error) {
-	for {
-		select {
-		default:
-		case <-ctx.Done():
-			return buffer.Len(), ctx.Err()
-		}
-		availableSpace := int64(buffer.Available())
-		limitedReader := io.LimitReader(reader, availableSpace)
-		if _, err := buffer.ReadFrom(limitedReader); err != nil {
-			return buffer.Len(), err
-		}
-		if buffer.Len() >= min {
-			return buffer.Len(), nil
-		}
-	}
+func ensureBuffered(reader io.Reader, buffer *bytes.Buffer, n int) error {
+	limit := int64(n)
+	limitedReader := io.LimitReader(reader, limit)
+	_, err := buffer.ReadFrom(limitedReader)
+	return err
 }
 
 func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {

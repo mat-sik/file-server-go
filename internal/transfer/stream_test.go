@@ -158,7 +158,7 @@ func Test_Stream_offsetAndBuffered(t *testing.T) {
 }
 
 func setOffset(buffer *bytes.Buffer, n int) {
-	for _ = range n {
+	for range n {
 		_, _ = buffer.ReadByte()
 	}
 }
