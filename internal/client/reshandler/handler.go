@@ -22,9 +22,9 @@ func HandelGetFileResponse(ctx context.Context, s state.ConnectionState, res mes
 	}
 
 	var reader io.Reader = s.Conn
-	filename := enrichedGetFileResponse.Filename
+	fileName := enrichedGetFileResponse.Filename
 	fileSize := getFileResponse.Size
-	if err := handleGetFileResponse(ctx, reader, buffer, filename, fileSize); err != nil {
+	if err := handleGetFileResponse(ctx, reader, buffer, fileName, fileSize); err != nil {
 		return err
 	}
 	fmt.Println(getFileResponse)

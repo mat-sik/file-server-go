@@ -10,13 +10,13 @@ func EnrichGetFileResponse(res message.Response, req message.Request) message.Re
 	if !ok {
 		panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
 	}
-	filename := getFileRequest.Filename
+	fileName := getFileRequest.Filename
 
 	getFileResponse := res.(*message.GetFileResponse)
 
 	return EnrichedGetFileResponse{
 		Response: getFileResponse,
-		Filename: filename,
+		Filename: fileName,
 	}
 }
 

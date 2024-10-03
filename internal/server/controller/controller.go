@@ -8,24 +8,24 @@ import (
 
 func HandleGetFileRequest(req message.Request) (message.Response, error) {
 	getFileReq := req.(*message.GetFileRequest)
-	filename := getFileReq.Filename
+	fileName := getFileReq.Filename
 
-	return handleGetFileRequest(filename)
+	return handleGetFileRequest(fileName)
 }
 
 func HandlePutFileRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
 	putFileReq := req.(*message.PutFileRequest)
-	filename := putFileReq.FileName
+	fileName := putFileReq.FileName
 	fileSize := putFileReq.Size
 
 	writer := s.Conn
 	buffer := s.Buffer
 
-	return handlePutFileRequest(ctx, writer, buffer, filename, fileSize)
+	return handlePutFileRequest(ctx, writer, buffer, fileName, fileSize)
 }
 
 func HandleDeleteFileRequest(req message.Request) (message.Response, error) {
 	deleteFileReq := req.(*message.DeleteFileRequest)
-	filename := deleteFileReq.FileName
-	return handleDeleteFileRequest(filename)
+	fileName := deleteFileReq.FileName
+	return handleDeleteFileRequest(fileName)
 }
