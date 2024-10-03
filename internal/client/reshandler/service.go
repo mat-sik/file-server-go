@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func handleGetFileResponse(
 	ctx context.Context,
 	reader io.Reader,
 	buffer *bytes.Buffer,
-	filename string,
+	fileName string,
 	fileSize int,
 ) error {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	path := filepath.Join(envs.ClientDBPath, fileName)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}

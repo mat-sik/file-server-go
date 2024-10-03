@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"io"
 	"os"
+	"path/filepath"
 )
 
-func handleGetFileRequest(filename string) (message.Response, error) {
-	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+func handleGetFileRequest(fileName string) (message.Response, error) {
+	path := filepath.Join(envs.ServerDBPath, fileName)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if errors.Is(err, os.ErrNotExist) {
 		return &message.GetFileResponse{Status: 404, Size: 0}, err
 	}
@@ -64,12 +67,13 @@ func handlePutFileRequest(
 	ctx context.Context,
 	writer io.Writer,
 	buffer *bytes.Buffer,
-	filename string,
+	fileName string,
 	fileSize int,
 ) (message.Response, error) {
 	defer buffer.Reset()
 
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	path := filepath.Join(envs.ServerDBPath, fileName)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +85,8 @@ func handlePutFileRequest(
 	return &message.PutFileResponse{Status: 200}, nil
 }
 
-func handleDeleteFileRequest(filename string) (message.Response, error) {
-	err := os.Remove(filename)
+func handleDeleteFileRequest(fileName string) (message.Response, error) {
+	err := os.Remove(fileName)
 	if err != nil {
 		return nil, err
 	}

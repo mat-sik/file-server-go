@@ -3,18 +3,21 @@ package service
 import (
 	"bytes"
 	"context"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"io"
 	"os"
+	"path/filepath"
 )
 
-func HandleGetFileRequest(filename string) (message.Request, error) {
-	return &message.GetFileRequest{Filename: filename}, nil
+func HandleGetFileRequest(fileName string) (message.Request, error) {
+	return &message.GetFileRequest{Filename: fileName}, nil
 }
 
-func HandlePutFileRequest(filename string) (message.Request, error) {
-	file, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+func HandlePutFileRequest(fileName string) (message.Request, error) {
+	path := filepath.Join(envs.ClientDBPath, fileName)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +29,7 @@ func HandlePutFileRequest(filename string) (message.Request, error) {
 
 	fileSize := int(fileInfo.Size())
 
-	req := message.PutFileRequest{FileName: filename, Size: fileSize}
+	req := message.PutFileRequest{FileName: fileName, Size: fileSize}
 	return &StreamRequest{
 		Request:    &req,
 		File:       file,
@@ -65,6 +68,6 @@ func (req *StreamRequest) Stream(
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, req)
 }
 
-func HandleDeleteFileRequest(filename string) (message.Request, error) {
-	return &message.DeleteFileRequest{FileName: filename}, nil
+func HandleDeleteFileRequest(fileName string) (message.Request, error) {
+	return &message.DeleteFileRequest{FileName: fileName}, nil
 }
