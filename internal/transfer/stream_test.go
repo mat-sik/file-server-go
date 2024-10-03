@@ -37,15 +37,14 @@ func Test_Stream(t *testing.T) {
 func Test_Stream_offset(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
-
-	_, _ = buffer.ReadByte()
-	_, _ = buffer.ReadByte()
+	setOffset(buffer, 2)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1019))
-	expectedBuffer.WriteString("our f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	expectedBuffer.WriteString("ree f")
+	setOffset(expectedBuffer, 5)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteString("one two three f")
@@ -72,8 +71,9 @@ func Test_Stream_buffered(t *testing.T) {
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1016))
-	expectedBuffer.WriteString(" f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	expectedBuffer.WriteString("three four")
+	setOffset(expectedBuffer, 10)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -98,14 +98,14 @@ func Test_Stream_buffered(t *testing.T) {
 func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
-
-	_, _ = buffer.ReadByte()
+	setOffset(buffer, 1)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1021))
-	expectedBuffer.WriteString("two th")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	expectedBuffer.WriteString("one ")
+	setOffset(expectedBuffer, 4)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -129,14 +129,14 @@ func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 func Test_Stream_offsetAndBuffered(t *testing.T) {
 	// given
 	buffer := bytes.NewBuffer(make([]byte, 2, 10))
-
-	_, _ = buffer.ReadByte()
+	setOffset(buffer, 1)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1015))
-	expectedBuffer.WriteString("f")
+	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	expectedBuffer.WriteString("ree four ")
+	setOffset(expectedBuffer, 9)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -154,5 +154,11 @@ func Test_Stream_offsetAndBuffered(t *testing.T) {
 	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
+	}
+}
+
+func setOffset(buffer *bytes.Buffer, n int) {
+	for _ = range n {
+		_, _ = buffer.ReadByte()
 	}
 }
