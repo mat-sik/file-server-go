@@ -76,7 +76,7 @@ type GetFileRequest struct {
 }
 
 func (req *GetFileRequest) GetType() TypeName {
-	return GetFileResponseTypeNum
+	return GetFileRequestTypeNum
 }
 
 func (req *GetFileRequest) GetRequestType() RequestTypeName {
@@ -89,7 +89,7 @@ type GetFileResponse struct {
 }
 
 func (res *GetFileResponse) GetType() TypeName {
-	return GetFileRequestTypeNum
+	return GetFileResponseTypeNum
 }
 
 func (res *GetFileResponse) GetResponseType() ResponseTypeName {
