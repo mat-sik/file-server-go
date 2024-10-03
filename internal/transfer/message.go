@@ -45,7 +45,7 @@ func ReceiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Message, error) {
-	if err := ensureBuffered(reader, buffer, mheader.HeaderSize); err != nil {
+	if err := readN(reader, buffer, mheader.HeaderSize); err != nil {
 		return nil, err
 	}
 
@@ -53,6 +53,10 @@ func ReceiveMessage(
 
 	toRead := header.PayloadSize - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
+		return nil, err
+	}
+
+	if err := readN(reader, buffer, int(toRead)); err != nil {
 		return nil, err
 	}
 
@@ -69,7 +73,7 @@ func ReceiveMessage(
 	return m, nil
 }
 
-func ensureBuffered(reader io.Reader, buffer *bytes.Buffer, n int) error {
+func readN(reader io.Reader, buffer *bytes.Buffer, n int) error {
 	limit := int64(n)
 	limitedReader := io.LimitReader(reader, limit)
 	_, err := buffer.ReadFrom(limitedReader)
