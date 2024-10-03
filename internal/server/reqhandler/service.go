@@ -1,4 +1,4 @@
-package controller
+package reqhandler
 
 import (
 	"bytes"

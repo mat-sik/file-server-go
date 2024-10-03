@@ -1,9 +1,9 @@
-package controller
+package reqhandler
 
 import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/state"
+	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
 )
 
 func HandleGetFileRequest(req message.Request) (message.Response, error) {
@@ -13,13 +13,13 @@ func HandleGetFileRequest(req message.Request) (message.Response, error) {
 	return handleGetFileRequest(fileName)
 }
 
-func HandlePutFileRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
+func HandlePutFileRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) (message.Response, error) {
 	putFileReq := req.(*message.PutFileRequest)
 	fileName := putFileReq.FileName
 	fileSize := putFileReq.Size
 
-	writer := s.Conn
-	buffer := s.Buffer
+	writer := connCtx.Conn
+	buffer := connCtx.Buffer
 
 	return handlePutFileRequest(ctx, writer, buffer, fileName, fileSize)
 }

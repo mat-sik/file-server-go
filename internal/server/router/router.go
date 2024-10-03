@@ -4,30 +4,30 @@ import (
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/server/controller"
+	"github.com/mat-sik/file-server-go/internal/server/reqhandler"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/state"
+	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
 	"io"
 	"time"
 )
 
-func HandleRequest(ctx context.Context, s state.ConnectionState) error {
-	req, err := receiveRequest(s)
+func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext) error {
+	req, err := receiveRequest(connCtx)
 	if err != nil {
 		return err
 	}
 
-	res, err := routeRequest(ctx, s, req)
+	res, err := routeRequest(ctx, connCtx, req)
 	if err != nil {
 		return err
 	}
 
-	return deliverResponse(ctx, s, res)
+	return deliverResponse(ctx, connCtx, res)
 }
 
-func receiveRequest(s state.ConnectionState) (message.Request, error) {
-	var reader io.Reader = s.Conn
-	buffer := s.Buffer
+func receiveRequest(connCtx conncontext.ConnectionContext) (message.Request, error) {
+	var reader io.Reader = connCtx.Conn
+	buffer := connCtx.Buffer
 	m, err := transfer.ReceiveMessage(reader, buffer)
 	if err != nil {
 		return nil, err
@@ -40,8 +40,8 @@ func receiveRequest(s state.ConnectionState) (message.Request, error) {
 	return req, nil
 }
 
-func routeRequest(ctx context.Context, s state.ConnectionState, req message.Request) (message.Response, error) {
-	buffer := s.Buffer
+func routeRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) (message.Response, error) {
+	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
@@ -49,43 +49,43 @@ func routeRequest(ctx context.Context, s state.ConnectionState, req message.Requ
 
 	switch req.GetRequestType() {
 	case message.GetFileRequestType:
-		return controller.HandleGetFileRequest(req)
+		return reqhandler.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
-		return controller.HandlePutFileRequest(ctx, s, req)
+		return reqhandler.HandlePutFileRequest(ctx, connCtx, req)
 	case message.DeleteFileRequestType:
-		return controller.HandleDeleteFileRequest(req)
+		return reqhandler.HandleDeleteFileRequest(req)
 	default:
 		return nil, ErrUnexpectedRequestType
 	}
 }
 
-func deliverResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
+func deliverResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
 	switch res.GetResponseType() {
 	case message.GetFileResponseType:
-		return streamResponse(ctx, s, res)
+		return streamResponse(ctx, connCtx, res)
 	default:
-		return sendResponse(s, res)
+		return sendResponse(connCtx, res)
 	}
 }
 
-func streamResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
+func streamResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
 	streamRes := res.(message.StreamableMessage)
 
-	var writer io.Writer = s.Conn
-	headerBuffer := s.HeaderBuffer
-	messageBuffer := s.Buffer
+	var writer io.Writer = connCtx.Conn
+	headerBuffer := connCtx.HeaderBuffer
+	messageBuffer := connCtx.Buffer
 	return streamRes.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
-func sendResponse(s state.ConnectionState, res message.Response) error {
+func sendResponse(connCtx conncontext.ConnectionContext, res message.Response) error {
 	m := res.(message.Message)
 
-	var writer io.Writer = s.Conn
-	headerBuffer := s.HeaderBuffer
-	messageBuffer := s.Buffer
+	var writer io.Writer = connCtx.Conn
+	headerBuffer := connCtx.HeaderBuffer
+	messageBuffer := connCtx.Buffer
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
 }
 

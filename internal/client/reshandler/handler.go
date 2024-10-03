@@ -3,17 +3,17 @@ package reshandler
 import (
 	"context"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/resenricher"
+	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/state"
+	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
 	"io"
 )
 
-func HandelGetFileResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
-	buffer := s.Buffer
+func HandelGetFileResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
-	enrichedGetFileResponse := res.(*resenricher.EnrichedGetFileResponse)
+	enrichedGetFileResponse := res.(*enricher.EnrichedGetFileResponse)
 	getFileResponse := enrichedGetFileResponse.Response.(*message.GetFileResponse)
 
 	status := getFileResponse.Status
@@ -21,7 +21,7 @@ func HandelGetFileResponse(ctx context.Context, s state.ConnectionState, res mes
 		fmt.Printf("getFileResponse status: %d\n", status)
 	}
 
-	var reader io.Reader = s.Conn
+	var reader io.Reader = connCtx.Conn
 	fileName := enrichedGetFileResponse.Filename
 	fileSize := getFileResponse.Size
 	if err := handleGetFileResponse(ctx, reader, buffer, fileName, fileSize); err != nil {

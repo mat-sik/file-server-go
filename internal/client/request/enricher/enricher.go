@@ -1,4 +1,4 @@
-package resenricher
+package enricher
 
 import (
 	"fmt"

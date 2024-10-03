@@ -1,4 +1,4 @@
-package service
+package request
 
 import (
 	"bytes"
@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 )
 
-func HandleGetFileRequest(fileName string) (message.Request, error) {
+func NewGetFileRequest(fileName string) (message.Request, error) {
 	return &message.GetFileRequest{Filename: fileName}, nil
 }
 
-func HandlePutFileRequest(fileName string) (message.Request, error) {
+func NewPutFileRequest(fileName string) (message.Request, error) {
 	path := filepath.Join(envs.ClientDBPath, fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
@@ -68,6 +68,6 @@ func (req *StreamRequest) Stream(
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, req)
 }
 
-func HandleDeleteFileRequest(fileName string) (message.Request, error) {
+func NewDeleteFileRequest(fileName string) (message.Request, error) {
 	return &message.DeleteFileRequest{FileName: fileName}, nil
 }

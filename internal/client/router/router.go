@@ -3,34 +3,34 @@ package router
 import (
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/client/resenricher"
+	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
 	"github.com/mat-sik/file-server-go/internal/client/reshandler"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/state"
+	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
 	"io"
 	"time"
 )
 
-func HandleRequest(ctx context.Context, s state.ConnectionState, req message.Request) error {
-	if err := deliverRequest(ctx, s, req); err != nil {
+func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
+	if err := deliverRequest(ctx, connCtx, req); err != nil {
 		return err
 	}
 
 	enrichRes := func(res message.Response) message.Response {
-		return resenricher.EnrichGetFileResponse(res, req)
+		return enricher.EnrichGetFileResponse(res, req)
 	}
 
-	res, err := receiveResponse(s, enrichRes)
+	res, err := receiveResponse(connCtx, enrichRes)
 	if err != nil {
 		return err
 	}
 
-	return handleResponse(ctx, s, res)
+	return handleResponse(ctx, connCtx, res)
 }
 
 func receiveResponse(
-	s state.ConnectionState,
+	s conncontext.ConnectionContext,
 	enrichRes func(message.Response) message.Response,
 ) (message.Response, error) {
 	var reader io.Reader = s.Conn
@@ -52,43 +52,43 @@ func receiveResponse(
 	return res, nil
 }
 
-func deliverRequest(ctx context.Context, s state.ConnectionState, req message.Request) error {
+func deliverRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
 	switch req.GetRequestType() {
 	case message.PutFileRequestType:
-		return streamRequest(ctx, s, req)
+		return streamRequest(ctx, connCtx, req)
 	default:
-		return sendRequest(s, req)
+		return sendRequest(connCtx, req)
 	}
 }
 
-func streamRequest(ctx context.Context, s state.ConnectionState, req message.Request) error {
+func streamRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
 	streamReq := req.(message.StreamableMessage)
 
-	var writer io.Writer = s.Conn
-	headerBuffer := s.HeaderBuffer
-	messageBuffer := s.Buffer
+	var writer io.Writer = connCtx.Conn
+	headerBuffer := connCtx.HeaderBuffer
+	messageBuffer := connCtx.Buffer
 	return streamReq.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
-func sendRequest(s state.ConnectionState, req message.Request) error {
+func sendRequest(connCtx conncontext.ConnectionContext, req message.Request) error {
 	m := req.(message.Message)
 
-	var writer io.Writer = s.Conn
-	headerBuffer := s.HeaderBuffer
-	messageBuffer := s.Buffer
+	var writer io.Writer = connCtx.Conn
+	headerBuffer := connCtx.HeaderBuffer
+	messageBuffer := connCtx.Buffer
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
 }
 
-func handleResponse(ctx context.Context, s state.ConnectionState, res message.Response) error {
-	buffer := s.Buffer
+func handleResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
 	switch res.GetResponseType() {
 	case message.GetFileResponseType:
-		return reshandler.HandelGetFileResponse(ctx, s, res)
+		return reshandler.HandelGetFileResponse(ctx, connCtx, res)
 	case message.PutFileResponseType:
 		reshandler.HandlePutFileResponse(res)
 	case message.DeleteFileResponseType:

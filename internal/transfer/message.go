@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/mheader"
+	"github.com/mat-sik/file-server-go/internal/transfer/messheader"
 	"io"
 )
 
@@ -24,11 +24,11 @@ func SendMessage(
 
 	messageSize := uint32(messageBuffer.Len())
 	messageType := m.GetType()
-	header := mheader.MessageHeader{
+	header := messheader.MessageHeader{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
 	}
-	if err := mheader.EncodeHeader(header, headerBuffer); err != nil {
+	if err := messheader.EncodeHeader(header, headerBuffer); err != nil {
 		return err
 	}
 
@@ -45,11 +45,11 @@ func ReceiveMessage(
 	reader io.Reader,
 	buffer *bytes.Buffer,
 ) (message.Message, error) {
-	if err := readN(reader, buffer, mheader.HeaderSize); err != nil {
+	if err := readN(reader, buffer, messheader.HeaderSize); err != nil {
 		return nil, err
 	}
 
-	header := mheader.DecodeHeader(buffer)
+	header := messheader.DecodeHeader(buffer)
 
 	toRead := header.PayloadSize - uint32(buffer.Len())
 	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
