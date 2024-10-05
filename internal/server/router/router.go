@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/server/reqhandler"
+	"github.com/mat-sik/file-server-go/internal/server/request"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
+	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
 	"time"
 )
 
-func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext) error {
+func HandleRequest(ctx context.Context, connCtx connection.Context) error {
 	req, err := receiveRequest(connCtx)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext) e
 	return deliverResponse(ctx, connCtx, res)
 }
 
-func receiveRequest(connCtx conncontext.ConnectionContext) (message.Request, error) {
+func receiveRequest(connCtx connection.Context) (message.Request, error) {
 	var reader io.Reader = connCtx.Conn
 	buffer := connCtx.Buffer
 	m, err := transfer.ReceiveMessage(reader, buffer)
@@ -40,7 +40,7 @@ func receiveRequest(connCtx conncontext.ConnectionContext) (message.Request, err
 	return req, nil
 }
 
-func routeRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) (message.Response, error) {
+func routeRequest(ctx context.Context, connCtx connection.Context, req message.Request) (message.Response, error) {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
@@ -49,17 +49,17 @@ func routeRequest(ctx context.Context, connCtx conncontext.ConnectionContext, re
 
 	switch req.GetRequestType() {
 	case message.GetFileRequestType:
-		return reqhandler.HandleGetFileRequest(req)
+		return request.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
-		return reqhandler.HandlePutFileRequest(ctx, connCtx, req)
+		return request.HandlePutFileRequest(ctx, connCtx, req)
 	case message.DeleteFileRequestType:
-		return reqhandler.HandleDeleteFileRequest(req)
+		return request.HandleDeleteFileRequest(req)
 	default:
 		return nil, ErrUnexpectedRequestType
 	}
 }
 
-func deliverResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+func deliverResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
@@ -71,7 +71,7 @@ func deliverResponse(ctx context.Context, connCtx conncontext.ConnectionContext,
 	}
 }
 
-func streamResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+func streamResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
 	streamRes := res.(message.StreamableMessage)
 
 	var writer io.Writer = connCtx.Conn
@@ -80,7 +80,7 @@ func streamResponse(ctx context.Context, connCtx conncontext.ConnectionContext, 
 	return streamRes.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
-func sendResponse(connCtx conncontext.ConnectionContext, res message.Response) error {
+func sendResponse(connCtx connection.Context, res message.Response) error {
 	m := res.(message.Message)
 
 	var writer io.Writer = connCtx.Conn

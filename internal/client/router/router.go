@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
-	"github.com/mat-sik/file-server-go/internal/client/reshandler"
+	"github.com/mat-sik/file-server-go/internal/client/response"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
+	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
 	"time"
 )
 
-func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
+func HandleRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
 	if err := deliverRequest(ctx, connCtx, req); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func HandleRequest(ctx context.Context, connCtx conncontext.ConnectionContext, r
 }
 
 func receiveResponse(
-	s conncontext.ConnectionContext,
+	s connection.Context,
 	enrichRes func(message.Response) message.Response,
 ) (message.Response, error) {
 	var reader io.Reader = s.Conn
@@ -52,7 +52,7 @@ func receiveResponse(
 	return res, nil
 }
 
-func deliverRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
+func deliverRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
@@ -64,7 +64,7 @@ func deliverRequest(ctx context.Context, connCtx conncontext.ConnectionContext, 
 	}
 }
 
-func streamRequest(ctx context.Context, connCtx conncontext.ConnectionContext, req message.Request) error {
+func streamRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
 	streamReq := req.(message.StreamableMessage)
 
 	var writer io.Writer = connCtx.Conn
@@ -73,7 +73,7 @@ func streamRequest(ctx context.Context, connCtx conncontext.ConnectionContext, r
 	return streamReq.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
-func sendRequest(connCtx conncontext.ConnectionContext, req message.Request) error {
+func sendRequest(connCtx connection.Context, req message.Request) error {
 	m := req.(message.Message)
 
 	var writer io.Writer = connCtx.Conn
@@ -82,17 +82,17 @@ func sendRequest(connCtx conncontext.ConnectionContext, req message.Request) err
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
 }
 
-func handleResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+func handleResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
 	switch res.GetResponseType() {
 	case message.GetFileResponseType:
-		return reshandler.HandelGetFileResponse(ctx, connCtx, res)
+		return response.HandelGetFileResponse(ctx, connCtx, res)
 	case message.PutFileResponseType:
-		reshandler.HandlePutFileResponse(res)
+		response.HandlePutFileResponse(res)
 	case message.DeleteFileResponseType:
-		reshandler.HandleDeleteFileResponse(res)
+		response.HandleDeleteFileResponse(res)
 	default:
 		return ErrUnexpectedResponseType
 	}

@@ -1,15 +1,15 @@
-package reshandler
+package response
 
 import (
 	"context"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
+	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
 )
 
-func HandelGetFileResponse(ctx context.Context, connCtx conncontext.ConnectionContext, res message.Response) error {
+func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 

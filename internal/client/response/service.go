@@ -1,4 +1,4 @@
-package reshandler
+package response
 
 import (
 	"context"

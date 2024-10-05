@@ -1,4 +1,4 @@
-package messheader
+package header
 
 import (
 	"encoding/binary"
@@ -7,12 +7,12 @@ import (
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 )
 
-type MessageHeader struct {
+type Header struct {
 	PayloadSize uint32
 	PayloadType message.TypeName
 }
 
-func EncodeHeader(header MessageHeader, headerBuffer []byte) error {
+func EncodeHeader(header Header, headerBuffer []byte) error {
 	messageSize := header.PayloadSize
 	if err := encodeMessageSize(messageSize, headerBuffer); err != nil {
 		return err
@@ -24,14 +24,14 @@ func EncodeHeader(header MessageHeader, headerBuffer []byte) error {
 	return nil
 }
 
-func DecodeHeader(buffer *limited.Buffer) MessageHeader {
+func DecodeHeader(buffer *limited.Buffer) Header {
 	uint32ByteSlice := buffer.Next(uint32ByteSize)
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 
 	uint64ByteSlice := buffer.Next(uint64ByteSize)
 	payloadType := message.TypeName(binary.BigEndian.Uint64(uint64ByteSlice))
 
-	return MessageHeader{
+	return Header{
 		PayloadSize: payloadSize,
 		PayloadType: payloadType,
 	}
@@ -58,5 +58,5 @@ var ErrHeaderBufferTooSmall = errors.New("header buffer too small")
 const (
 	uint32ByteSize = 4
 	uint64ByteSize = 8
-	HeaderSize     = uint32ByteSize + uint64ByteSize
+	Size           = uint32ByteSize + uint64ByteSize
 )

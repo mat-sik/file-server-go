@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/client/request"
 	"github.com/mat-sik/file-server-go/internal/client/router"
-	"github.com/mat-sik/file-server-go/internal/transfer/conncontext"
+	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"net"
 )
 
@@ -14,7 +14,7 @@ func RunClient(ctx context.Context, hostname string) error {
 		return err
 	}
 
-	connCtx := conncontext.NewConnectionState(conn)
+	connCtx := connection.NewContext(conn)
 
 	req, err := request.NewGetFileRequest("foo.txt")
 	if err != nil {

@@ -1,4 +1,4 @@
-package reqhandler
+package request
 
 import (
 	"context"

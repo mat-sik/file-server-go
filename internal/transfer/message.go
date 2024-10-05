@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/header"
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
-	"github.com/mat-sik/file-server-go/internal/transfer/messheader"
 	"io"
 )
 
@@ -24,11 +24,11 @@ func SendMessage(
 
 	messageSize := uint32(messageBuffer.Len())
 	messageType := m.GetType()
-	header := messheader.MessageHeader{
+	messageHeader := header.Header{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
 	}
-	if err := messheader.EncodeHeader(header, headerBuffer); err != nil {
+	if err := header.EncodeHeader(messageHeader, headerBuffer); err != nil {
 		return err
 	}
 
@@ -45,13 +45,13 @@ func ReceiveMessage(
 	reader io.Reader,
 	buffer *limited.Buffer,
 ) (message.Message, error) {
-	if err := buffer.EnsureBufferedAtLeastN(reader, messheader.HeaderSize); err != nil {
+	if err := buffer.EnsureBufferedAtLeastN(reader, header.Size); err != nil {
 		return nil, err
 	}
 
-	header := messheader.DecodeHeader(buffer)
+	messageHeader := header.DecodeHeader(buffer)
 
-	toRead := header.PayloadSize - uint32(buffer.Len())
+	toRead := messageHeader.PayloadSize - uint32(buffer.Len())
 	if ok := buffer.PrepareSpace(int(toRead)); !ok {
 		return nil, ErrTooBigMessage
 	}
@@ -60,7 +60,7 @@ func ReceiveMessage(
 		return nil, err
 	}
 
-	m, err := message.TypeNameConverter(header.PayloadType)
+	m, err := message.TypeNameConverter(messageHeader.PayloadType)
 	if err != nil {
 		return nil, err
 	}

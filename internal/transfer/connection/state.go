@@ -1,21 +1,21 @@
-package conncontext
+package connection
 
 import (
+	"github.com/mat-sik/file-server-go/internal/transfer/header"
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
-	"github.com/mat-sik/file-server-go/internal/transfer/messheader"
 	"net"
 )
 
-type ConnectionContext struct {
+type Context struct {
 	Conn         net.Conn
 	Buffer       *limited.Buffer
 	HeaderBuffer []byte
 }
 
-func NewConnectionState(conn net.Conn) ConnectionContext {
+func NewContext(conn net.Conn) Context {
 	buffer := limited.NewBuffer(make([]byte, 0, bufferSize))
-	headerBuffer := make([]byte, messheader.HeaderSize)
-	return ConnectionContext{
+	headerBuffer := make([]byte, header.Size)
+	return Context{
 		Conn:         conn,
 		Buffer:       buffer,
 		HeaderBuffer: headerBuffer,
