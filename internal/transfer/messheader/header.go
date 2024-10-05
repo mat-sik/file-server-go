@@ -1,10 +1,10 @@
 package messheader
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 )
 
 type MessageHeader struct {
@@ -24,7 +24,7 @@ func EncodeHeader(header MessageHeader, headerBuffer []byte) error {
 	return nil
 }
 
-func DecodeHeader(buffer *bytes.Buffer) MessageHeader {
+func DecodeHeader(buffer *limited.Buffer) MessageHeader {
 	uint32ByteSlice := buffer.Next(uint32ByteSize)
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 

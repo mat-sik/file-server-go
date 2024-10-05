@@ -1,11 +1,11 @@
 package request
 
 import (
-	"bytes"
 	"context"
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 	"os"
 	"path/filepath"
@@ -63,7 +63,7 @@ func (req *StreamRequest) Stream(
 	ctx context.Context,
 	writer io.Writer,
 	headerBuffer []byte,
-	messageBuffer *bytes.Buffer,
+	messageBuffer *limited.Buffer,
 ) error {
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, req)
 }

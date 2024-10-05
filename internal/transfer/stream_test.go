@@ -3,18 +3,17 @@ package transfer
 import (
 	"bytes"
 	"context"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"strings"
 	"testing"
 )
 
 func Test_Stream(t *testing.T) {
 	// given
-	buffer := bytes.NewBuffer(make([]byte, 0, 10))
+	buffer := limited.NewBuffer(make([]byte, 0, 10))
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
-
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1014))
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteString("one two three four f")
@@ -26,9 +25,6 @@ func Test_Stream(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
-		t.Error(buffer, expectedBuffer)
-	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
@@ -36,15 +32,11 @@ func Test_Stream(t *testing.T) {
 
 func Test_Stream_offset(t *testing.T) {
 	// given
-	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+	buffer := limited.NewBuffer(make([]byte, 2, 10))
 	setOffset(buffer, 2)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
-
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedBuffer.WriteString("ree f")
-	setOffset(expectedBuffer, 5)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteString("one two three f")
@@ -56,9 +48,6 @@ func Test_Stream_offset(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
-		t.Error(buffer, expectedBuffer)
-	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
@@ -66,14 +55,10 @@ func Test_Stream_offset(t *testing.T) {
 
 func Test_Stream_buffered(t *testing.T) {
 	// given
-	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+	buffer := limited.NewBuffer(make([]byte, 2, 10))
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
-
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedBuffer.WriteString("three four")
-	setOffset(expectedBuffer, 10)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -87,9 +72,6 @@ func Test_Stream_buffered(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
-		t.Error(buffer, expectedBuffer)
-	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
@@ -97,15 +79,11 @@ func Test_Stream_buffered(t *testing.T) {
 
 func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	// given
-	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+	buffer := limited.NewBuffer(make([]byte, 2, 10))
 	setOffset(buffer, 1)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
-
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedBuffer.WriteString("one ")
-	setOffset(expectedBuffer, 4)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -118,9 +96,6 @@ func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
-		t.Error(buffer, expectedBuffer)
-	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
@@ -128,15 +103,11 @@ func Test_Stream_offsetAndBufferedToTransferSmallerThanBuffer(t *testing.T) {
 
 func Test_Stream_offsetAndBuffered(t *testing.T) {
 	// given
-	buffer := bytes.NewBuffer(make([]byte, 2, 10))
+	buffer := limited.NewBuffer(make([]byte, 2, 10))
 	setOffset(buffer, 1)
 
 	reader := strings.NewReader("one two three four five six")
 	writer := bytes.NewBuffer(make([]byte, 0, 1024))
-
-	expectedBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
-	expectedBuffer.WriteString("ree four ")
-	setOffset(expectedBuffer, 9)
 
 	expectedWriter := bytes.NewBuffer(make([]byte, 0, 1024))
 	expectedWriter.WriteByte(0)
@@ -149,16 +120,11 @@ func Test_Stream_offsetAndBuffered(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(buffer.Bytes(), expectedBuffer.Bytes()) {
-		t.Error(buffer, expectedBuffer)
-	}
 	if !bytes.Equal(writer.Bytes(), expectedWriter.Bytes()) {
 		t.Error(writer.Bytes(), expectedWriter.Bytes())
 	}
 }
 
-func setOffset(buffer *bytes.Buffer, n int) {
-	for range n {
-		_, _ = buffer.ReadByte()
-	}
+func setOffset(buffer *limited.Buffer, n int) {
+	_, _ = buffer.Read(make([]byte, n))
 }

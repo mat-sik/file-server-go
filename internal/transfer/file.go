@@ -1,9 +1,9 @@
 package transfer
 
 import (
-	"bytes"
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 	"os"
 )
@@ -18,7 +18,7 @@ func StreamFromFile(
 	ctx context.Context,
 	writer io.Writer,
 	headerBuffer []byte,
-	messageBuffer *bytes.Buffer,
+	messageBuffer *limited.Buffer,
 	streamable FileStreamableMessage,
 ) error {
 	defer messageBuffer.Reset()

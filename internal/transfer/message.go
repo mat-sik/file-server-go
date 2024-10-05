@@ -1,10 +1,10 @@
 package transfer
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"github.com/mat-sik/file-server-go/internal/transfer/messheader"
 	"io"
 )
@@ -12,7 +12,7 @@ import (
 func SendMessage(
 	writer io.Writer,
 	headerBuffer []byte,
-	messageBuffer *bytes.Buffer,
+	messageBuffer *limited.Buffer,
 	m message.Message,
 ) error {
 	defer messageBuffer.Reset()
@@ -43,20 +43,20 @@ func SendMessage(
 
 func ReceiveMessage(
 	reader io.Reader,
-	buffer *bytes.Buffer,
+	buffer *limited.Buffer,
 ) (message.Message, error) {
-	if err := readN(reader, buffer, messheader.HeaderSize); err != nil {
+	if err := buffer.EnsureBufferedAtLeastN(reader, messheader.HeaderSize); err != nil {
 		return nil, err
 	}
 
 	header := messheader.DecodeHeader(buffer)
 
 	toRead := header.PayloadSize - uint32(buffer.Len())
-	if err := ensureBufferHasSpace(buffer, toRead); err != nil {
-		return nil, err
+	if ok := buffer.PrepareSpace(int(toRead)); !ok {
+		return nil, ErrTooBigMessage
 	}
 
-	if err := readN(reader, buffer, int(toRead)); err != nil {
+	if err := buffer.EnsureBufferedAtLeastN(reader, int(toRead)); err != nil {
 		return nil, err
 	}
 
@@ -71,35 +71,6 @@ func ReceiveMessage(
 	}
 
 	return m, nil
-}
-
-func readN(reader io.Reader, buffer *bytes.Buffer, n int) error {
-	limit := int64(n)
-	limitedReader := io.LimitReader(reader, limit)
-	_, err := buffer.ReadFrom(limitedReader)
-	return err
-}
-
-func ensureBufferHasSpace(buffer *bytes.Buffer, size uint32) error {
-	bufferCapacity := uint32(buffer.Cap())
-	buffered := uint32(buffer.Len())
-	if size+buffered > bufferCapacity {
-		return ErrTooBigMessage
-	}
-	availableSpace := uint32(buffer.Available())
-	if availableSpace < size {
-		if err := compact(buffer); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func compact(buffer *bytes.Buffer) error {
-	payload := buffer.Bytes()
-	buffer.Reset()
-	_, err := buffer.Write(payload)
-	return err
 }
 
 var ErrTooBigMessage = errors.New("buffer is too small to fit the message")

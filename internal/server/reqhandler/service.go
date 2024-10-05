@@ -1,12 +1,12 @@
 package reqhandler
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 	"os"
 	"path/filepath"
@@ -58,7 +58,7 @@ func (res *StreamResponse) Stream(
 	ctx context.Context,
 	writer io.Writer,
 	headerBuffer []byte,
-	messageBuffer *bytes.Buffer,
+	messageBuffer *limited.Buffer,
 ) error {
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, res)
 }
@@ -66,7 +66,7 @@ func (res *StreamResponse) Stream(
 func handlePutFileRequest(
 	ctx context.Context,
 	writer io.Writer,
-	buffer *bytes.Buffer,
+	buffer *limited.Buffer,
 	fileName string,
 	fileSize int,
 ) (message.Response, error) {

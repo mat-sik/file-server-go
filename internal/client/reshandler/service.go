@@ -1,11 +1,11 @@
 package reshandler
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,7 +14,7 @@ import (
 func handleGetFileResponse(
 	ctx context.Context,
 	reader io.Reader,
-	buffer *bytes.Buffer,
+	buffer *limited.Buffer,
 	fileName string,
 	fileSize int,
 ) error {

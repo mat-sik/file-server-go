@@ -100,6 +100,25 @@ func (b *Buffer) Next(n int) []byte {
 	return data
 }
 
+func (b *Buffer) EnsureBufferedAtLeastN(reader io.Reader, n int) error {
+	for b.Len() < n {
+		if _, err := b.MaxRead(reader); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *Buffer) PrepareSpace(n int) bool {
+	if b.Len()+n > b.Cap() {
+		return false
+	}
+	if b.Available() < n {
+		b.Compact()
+	}
+	return true
+}
+
 func (b *Buffer) Compact() {
 	unread := b.buffer[b.offset:]
 	b.Reset()

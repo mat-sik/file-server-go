@@ -1,9 +1,9 @@
 package message
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 )
 
@@ -12,7 +12,7 @@ type Message interface {
 }
 
 type StreamableMessage interface {
-	Stream(ctx context.Context, writer io.Writer, headerBuffer []byte, messageBuffer *bytes.Buffer) error
+	Stream(ctx context.Context, writer io.Writer, headerBuffer []byte, messageBuffer *limited.Buffer) error
 }
 
 type Request interface {
