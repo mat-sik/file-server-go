@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"io"
 	"testing"
 )
@@ -12,7 +13,7 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	//
 	in := message.PutFileRequest{FileName: "huge_file_name", Size: 404}
 	sizeBuffer := make([]byte, 12)
-	messageBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	messageBuffer := limited.NewBuffer(make([]byte, 0, 1024))
 	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
 
 	var sendSocket io.Writer = buffer
