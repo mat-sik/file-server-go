@@ -61,6 +61,11 @@ func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 	return int64(n), err
 }
 
+func (b *Buffer) LimitedWrite(w io.Writer, limit int) (int, error) {
+	toWriteBytes := b.Next(limit)
+	return w.Write(toWriteBytes)
+}
+
 // MaxRead read as much as possible in a single cycle
 func (b *Buffer) MaxRead(r io.Reader) (int, error) {
 	if b.empty() {

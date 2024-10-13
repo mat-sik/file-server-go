@@ -21,7 +21,8 @@ func Stream(
 
 		if buffered := buffer.Len(); buffered > 0 {
 			toRead := toTransfer - written
-			n, err := limitedWrite(buffer, writer, buffered, toRead)
+			limit := min(buffered, toRead)
+			n, err := buffer.LimitedWrite(writer, limit)
 			if err != nil {
 				return err
 			}
@@ -37,12 +38,6 @@ func Stream(
 		}
 	}
 	return nil
-}
-
-func limitedWrite(buffer *limited.Buffer, writer io.Writer, buffered, toRead int) (int, error) {
-	limit := min(buffered, toRead)
-	toWriteBytes := buffer.Next(limit)
-	return writer.Write(toWriteBytes)
 }
 
 func ctxEarlyReturn(ctx context.Context) error {
