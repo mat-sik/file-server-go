@@ -32,22 +32,17 @@ func (b *Buffer) Available() int {
 
 func (b *Buffer) Write(p []byte) (int, error) {
 	toReserve := len(p)
-	oldLen, err := b.staticGrow(toReserve)
-	if err != nil {
-		return 0, err
-	}
+	oldLen := b.staticGrow(toReserve)
 	availableBuffer := b.buffer[oldLen:]
 	return copy(availableBuffer, p), nil
 }
 
-func (b *Buffer) staticGrow(n int) (int, error) {
-	if n > b.Available() {
-		return 0, io.ErrShortBuffer
-	}
+// staticGrow tries to make space for n, if it can't, it tires to make as much space as possible.
+func (b *Buffer) staticGrow(n int) int {
 	oldLen := len(b.buffer)
-	newLen := oldLen + n
+	newLen := min(b.Cap(), oldLen+n)
 	b.buffer = b.buffer[:newLen]
-	return oldLen, nil
+	return oldLen
 }
 
 func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
