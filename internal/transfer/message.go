@@ -2,7 +2,6 @@ package transfer
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer/header"
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
@@ -52,10 +51,6 @@ func ReceiveMessage(
 	messageHeader := header.DecodeHeader(buffer)
 
 	toRead := messageHeader.PayloadSize - uint32(buffer.Len())
-	if ok := buffer.PrepareSpace(int(toRead)); !ok {
-		return nil, ErrTooBigMessage
-	}
-
 	if err := buffer.EnsureBufferedAtLeastN(reader, int(toRead)); err != nil {
 		return nil, err
 	}
@@ -72,5 +67,3 @@ func ReceiveMessage(
 
 	return m, nil
 }
-
-var ErrTooBigMessage = errors.New("buffer is too small to fit the message")

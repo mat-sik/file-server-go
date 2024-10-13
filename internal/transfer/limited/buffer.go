@@ -1,6 +1,7 @@
 package limited
 
 import (
+	"errors"
 	"io"
 )
 
@@ -18,6 +19,7 @@ func (b *Buffer) empty() bool {
 	return len(b.buffer) == b.offset
 }
 
+// Len returns amount of ready to be read unread bytes.
 func (b *Buffer) Len() int {
 	return len(b.buffer) - b.offset
 }
@@ -56,13 +58,33 @@ func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 	return int64(n), err
 }
 
-func (b *Buffer) LimitedWrite(w io.Writer, limit int) (int, error) {
-	toWriteBytes := b.Next(limit)
-	return w.Write(toWriteBytes)
+type SingleWriterTo interface {
+	SingleWriteTo(io.Writer, int) (int, error)
 }
 
-// MaxRead read as much as possible in a single cycle
-func (b *Buffer) MaxRead(r io.Reader) (int, error) {
+// SingleWriteTo writes at most N bytes from the underlying buffer to the io.Writer in a single Write operation.
+// Returns ErrNotEnoughBuffered, if the buffer has not enough data.
+func (b *Buffer) SingleWriteTo(w io.Writer, n int) (int, error) {
+	if b.Len() < n {
+		return 0, ErrNotEnoughBuffered
+	}
+	toWriteBytes := b.buffer[b.offset : b.offset+n]
+	n, err := w.Write(toWriteBytes)
+	if err != nil {
+		return 0, err
+	}
+	b.offset += n
+	return n, err
+}
+
+var ErrNotEnoughBuffered = errors.New("buffer has not enough buffered data")
+
+type SingleReaderFrom interface {
+	SingleReadFrom(io.Reader) (int, error)
+}
+
+// SingleReadFrom read as much as possible in a single Reader.read() call.
+func (b *Buffer) SingleReadFrom(r io.Reader) (int, error) {
 	if b.empty() {
 		b.Reset()
 	}
@@ -89,6 +111,10 @@ func (b *Buffer) Read(p []byte) (int, error) {
 	return read, nil
 }
 
+type ByteIterator interface {
+	Next(n int) []byte
+}
+
 func (b *Buffer) Next(n int) []byte {
 	if b.empty() {
 		b.Reset()
@@ -101,25 +127,30 @@ func (b *Buffer) Next(n int) []byte {
 }
 
 func (b *Buffer) EnsureBufferedAtLeastN(reader io.Reader, n int) error {
+	if !b.hasSpace(n) {
+		return ErrSmallBuffer
+	}
 	for b.Len() < n {
-		if _, err := b.MaxRead(reader); err != nil {
+		if _, err := b.SingleReadFrom(reader); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (b *Buffer) PrepareSpace(n int) bool {
+var ErrSmallBuffer = errors.New("buffer is too small")
+
+func (b *Buffer) hasSpace(n int) bool {
 	if b.Len()+n > b.Cap() {
 		return false
 	}
 	if b.Available() < n {
-		b.Compact()
+		b.compact()
 	}
 	return true
 }
 
-func (b *Buffer) Compact() {
+func (b *Buffer) compact() {
 	unread := b.buffer[b.offset:]
 	b.Reset()
 	_, _ = b.Write(unread)
