@@ -13,14 +13,21 @@ import (
 func Test_Stream(t *testing.T) {
 	tests := []struct {
 		name        string
+		ctx         context.Context
+		buffer      *MockStreamableBuffer
+		reader      io.Reader
+		writer      *bytes.Buffer
 		mockFunc    func(buffer *MockStreamableBuffer, r io.Reader, w io.Writer)
-		readerData  string
 		toTransfer  int
 		wantedData  string
 		expectError bool
 	}{
 		{
-			name: "normal case",
+			name:   "normal case",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbbcccc"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
 			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
 				len0 := m.On("Len").Return(0).Once()
 				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
@@ -32,12 +39,15 @@ func Test_Stream(t *testing.T) {
 				len2 := m.On("Len").Return(4).Once().NotBefore(read1)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("bbbb")).Once().NotBefore(len2)
 			},
-			readerData: "aaaabbbbcccc",
 			toTransfer: 8,
 			wantedData: "aaaabbbb",
 		},
 		{
-			name: "exact buffer size",
+			name:   "exact buffer size",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
 			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
 				len0 := m.On("Len").Return(0).Once()
 				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
@@ -45,15 +55,17 @@ func Test_Stream(t *testing.T) {
 				len1 := m.On("Len").Return(4).Once().NotBefore(read0)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("aaaa")).Once().NotBefore(len1)
 			},
-			readerData: "aaaabbbb",
 			toTransfer: 4,
 			wantedData: "aaaa",
 		},
 		{
-			name: "zero transfer",
+			name:   "zero transfer",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
 			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
 			},
-			readerData: "aaaabbbb",
 			toTransfer: 0,
 			wantedData: "",
 		},
@@ -62,27 +74,22 @@ func Test_Stream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			reader := strings.NewReader(tt.readerData)
-			writer := bytes.NewBuffer(make([]byte, 0, bytesBufferCap))
-
 			want := []byte(tt.wantedData)
-			ctx := context.Background()
 
-			mockBuffer := &MockStreamableBuffer{}
-			tt.mockFunc(mockBuffer, reader, writer)
+			tt.mockFunc(tt.buffer, tt.reader, tt.writer)
 
 			// when
-			err := Stream(ctx, reader, writer, mockBuffer, tt.toTransfer)
+			err := Stream(tt.ctx, tt.reader, tt.writer, tt.buffer, tt.toTransfer)
 			// then
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				got := writer.Bytes()
+				got := tt.writer.Bytes()
 				assert.Equal(t, want, got)
 			}
 
-			mockBuffer.AssertExpectations(t)
+			tt.buffer.AssertExpectations(t)
 		})
 	}
 }
