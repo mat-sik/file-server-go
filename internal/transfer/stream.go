@@ -13,17 +13,21 @@ type StreamableBuffer interface {
 	Reset()
 }
 
-func Stream(ctx context.Context, reader io.Reader, writer io.Writer, b StreamableBuffer, toTransfer int) error {
+func Stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer StreamableBuffer, toTransfer int) error {
+	if toTransfer == 0 {
+		return nil
+	}
+
 	written := 0
 	for {
 		if err := ctxEarlyReturn(ctx); err != nil {
 			return err
 		}
 
-		if buffered := b.Len(); buffered > 0 {
+		if buffered := buffer.Len(); buffered > 0 {
 			toRead := toTransfer - written
 			limit := min(buffered, toRead)
-			n, err := b.SingleWriteTo(writer, limit)
+			n, err := buffer.SingleWriteTo(writer, limit)
 			if err != nil {
 				return err
 			}
@@ -32,9 +36,9 @@ func Stream(ctx context.Context, reader io.Reader, writer io.Writer, b Streamabl
 				break
 			}
 		}
-		b.Reset()
+		buffer.Reset()
 
-		if _, err := b.SingleReadFrom(reader); err != nil {
+		if _, err := buffer.SingleReadFrom(reader); err != nil {
 			return err
 		}
 	}
