@@ -8,16 +8,18 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 func Test_Stream(t *testing.T) {
 	tests := []struct {
 		name        string
 		ctx         context.Context
-		buffer      *MockStreamableBuffer
+		buffer      StreamableBuffer
 		reader      io.Reader
 		writer      *bytes.Buffer
-		mockFunc    func(buffer *MockStreamableBuffer, r io.Reader, w io.Writer)
+		mockFunc    func(StreamableBuffer, context.Context, io.Reader, io.Writer)
+		assertFunc  func(StreamableBuffer, context.Context, io.Reader, io.Writer)
 		toTransfer  int
 		wantedData  string
 		expectError bool
@@ -28,7 +30,9 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbbcccc"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
+			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+
 				len0 := m.On("Len").Return(0).Once()
 				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
 				read0 := m.On("SingleReadFrom", r).Return(4, nil).Once().NotBefore(reset0)
@@ -39,6 +43,10 @@ func Test_Stream(t *testing.T) {
 				len2 := m.On("Len").Return(4).Once().NotBefore(read1)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("bbbb")).Once().NotBefore(len2)
 			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
+			},
 			toTransfer: 8,
 			wantedData: "aaaabbbb",
 		},
@@ -48,12 +56,18 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
+			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+
 				len0 := m.On("Len").Return(0).Once()
 				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
 				read0 := m.On("SingleReadFrom", r).Return(4, nil).Once().NotBefore(reset0)
 				len1 := m.On("Len").Return(4).Once().NotBefore(read0)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("aaaa")).Once().NotBefore(len1)
+			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
 			},
 			toTransfer: 4,
 			wantedData: "aaaa",
@@ -64,7 +78,11 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(m *MockStreamableBuffer, r io.Reader, w io.Writer) {
+			mockFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
 			},
 			toTransfer: 0,
 			wantedData: "",
@@ -76,7 +94,7 @@ func Test_Stream(t *testing.T) {
 			// given
 			want := []byte(tt.wantedData)
 
-			tt.mockFunc(tt.buffer, tt.reader, tt.writer)
+			tt.mockFunc(tt.buffer, tt.ctx, tt.reader, tt.writer)
 
 			// when
 			err := Stream(tt.ctx, tt.reader, tt.writer, tt.buffer, tt.toTransfer)
@@ -89,7 +107,7 @@ func Test_Stream(t *testing.T) {
 				assert.Equal(t, want, got)
 			}
 
-			tt.buffer.AssertExpectations(t)
+			tt.assertFunc(tt.buffer, tt.ctx, tt.reader, tt.writer)
 		})
 	}
 }
@@ -118,6 +136,30 @@ func (m *MockStreamableBuffer) Len() int {
 
 func (m *MockStreamableBuffer) Reset() {
 	_ = m.Called()
+}
+
+type MockContext struct {
+	mock.Mock
+}
+
+func (m *MockContext) Deadline() (deadline time.Time, ok bool) {
+	args := m.Called()
+	return args.Get(0).(time.Time), args.Bool(1)
+}
+
+func (m *MockContext) Done() <-chan struct{} {
+	args := m.Called()
+	return args.Get(0).(<-chan struct{})
+}
+
+func (m *MockContext) Err() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *MockContext) Value(key interface{}) interface{} {
+	args := m.Called(key)
+	return args.Get(0)
 }
 
 const bytesBufferCap = 1024
