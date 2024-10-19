@@ -13,16 +13,16 @@ import (
 
 func Test_Stream(t *testing.T) {
 	tests := []struct {
-		name        string
-		ctx         context.Context
-		buffer      StreamableBuffer
-		reader      io.Reader
-		writer      *bytes.Buffer
-		mockFunc    func(StreamableBuffer, context.Context, io.Reader, io.Writer)
-		assertFunc  func(StreamableBuffer, context.Context, io.Reader, io.Writer)
-		toTransfer  int
-		wantedData  string
-		expectError bool
+		name          string
+		ctx           context.Context
+		buffer        StreamableBuffer
+		reader        io.Reader
+		writer        *bytes.Buffer
+		mockFunc      func(StreamableBuffer, context.Context, io.Reader, io.Writer)
+		assertFunc    func(StreamableBuffer, context.Context, io.Reader, io.Writer)
+		toTransfer    int
+		wantedData    string
+		expectedError error
 	}{
 		{
 			name:   "normal case",
@@ -87,6 +87,32 @@ func Test_Stream(t *testing.T) {
 			toTransfer: 0,
 			wantedData: "",
 		},
+		{
+			name:   "ctx early return",
+			ctx:    &MockContext{},
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
+			mockFunc: func(_ StreamableBuffer, c context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := c.(*MockContext)
+
+				doneCh := make(chan struct{}, 1)
+				doneCh <- struct{}{}
+
+				done0 := m.On("Done").Return(doneCh).Once()
+				m.On("Err").Return(context.Canceled).Once().NotBefore(done0)
+			},
+			assertFunc: func(b StreamableBuffer, c context.Context, _ io.Reader, _ io.Writer) {
+				mockBuffer, _ := b.(*MockStreamableBuffer)
+				mockCtx, _ := c.(*MockContext)
+
+				mockCtx.AssertExpectations(t)
+				mockBuffer.AssertExpectations(t)
+			},
+			toTransfer:    4,
+			wantedData:    "",
+			expectedError: context.Canceled,
+		},
 	}
 
 	for _, tt := range tests {
@@ -99,10 +125,11 @@ func Test_Stream(t *testing.T) {
 			// when
 			err := Stream(tt.ctx, tt.reader, tt.writer, tt.buffer, tt.toTransfer)
 			// then
-			if tt.expectError {
-				assert.Error(t, err)
+			if tt.expectedError != nil {
+				assert.Equal(t, tt.expectedError, err)
 			} else {
 				assert.NoError(t, err)
+
 				got := tt.writer.Bytes()
 				assert.Equal(t, want, got)
 			}
@@ -149,7 +176,7 @@ func (m *MockContext) Deadline() (deadline time.Time, ok bool) {
 
 func (m *MockContext) Done() <-chan struct{} {
 	args := m.Called()
-	return args.Get(0).(<-chan struct{})
+	return args.Get(0).(chan struct{})
 }
 
 func (m *MockContext) Err() error {
