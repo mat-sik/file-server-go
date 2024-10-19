@@ -3,6 +3,7 @@ package transfer
 import (
 	"bytes"
 	"context"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io"
@@ -174,6 +175,19 @@ func Test_Stream(t *testing.T) {
 			},
 			toTransfer:    4,
 			expectedError: io.EOF,
+		},
+		{
+			name:   "test on real buffer",
+			ctx:    context.Background(),
+			buffer: limited.NewBuffer([]byte("aa")),
+			reader: strings.NewReader("aabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
+			mockFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			},
+			assertFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			},
+			toTransfer: 8,
+			wantedData: "aaaabbbb",
 		},
 	}
 
