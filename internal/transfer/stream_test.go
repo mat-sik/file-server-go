@@ -113,6 +113,26 @@ func Test_Stream(t *testing.T) {
 			wantedData:    "",
 			expectedError: context.Canceled,
 		},
+		{
+			name:   "read error",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
+			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+
+				len0 := m.On("Len").Return(0).Once()
+				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
+				m.On("SingleReadFrom", r).Return(-1, io.EOF).Once().NotBefore(reset0)
+			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
+			},
+			expectedError: io.EOF,
+			toTransfer:    4,
+		},
 	}
 
 	for _, tt := range tests {
@@ -146,7 +166,9 @@ type MockStreamableBuffer struct {
 func (m *MockStreamableBuffer) SingleReadFrom(reader io.Reader) (int, error) {
 	args := m.Called(reader)
 	n := args.Int(0)
-	_, _ = reader.Read(make([]byte, n))
+	if n > 0 {
+		_, _ = reader.Read(make([]byte, n))
+	}
 	return n, args.Error(1)
 }
 
