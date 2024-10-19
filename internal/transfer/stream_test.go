@@ -130,8 +130,27 @@ func Test_Stream(t *testing.T) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
-			expectedError: io.EOF,
 			toTransfer:    4,
+			expectedError: io.EOF,
+		},
+		{
+			name:   "write error",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("aaaabbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
+			mockFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, w io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+
+				len0 := m.On("Len").Return(1).Once()
+				m.On("SingleWriteTo", w, 1).Return(-1, io.EOF, make([]byte, 0)).Once().NotBefore(len0)
+			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
+			},
+			toTransfer:    4,
+			expectedError: io.EOF,
 		},
 	}
 
