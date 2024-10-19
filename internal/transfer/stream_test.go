@@ -78,7 +78,7 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			mockFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
 			},
 			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
@@ -102,9 +102,9 @@ func Test_Stream(t *testing.T) {
 				done0 := m.On("Done").Return(doneCh).Once()
 				m.On("Err").Return(context.Canceled).Once().NotBefore(done0)
 			},
-			assertFunc: func(b StreamableBuffer, c context.Context, _ io.Reader, _ io.Writer) {
-				mockBuffer, _ := b.(*MockStreamableBuffer)
-				mockCtx, _ := c.(*MockContext)
+			assertFunc: func(buffer StreamableBuffer, ctx context.Context, _ io.Reader, _ io.Writer) {
+				mockBuffer, _ := buffer.(*MockStreamableBuffer)
+				mockCtx, _ := ctx.(*MockContext)
 
 				mockCtx.AssertExpectations(t)
 				mockBuffer.AssertExpectations(t)
