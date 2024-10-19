@@ -73,6 +73,29 @@ func Test_Stream(t *testing.T) {
 			wantedData: "aaaa",
 		},
 		{
+			name:   "pre-buffered data",
+			ctx:    context.Background(),
+			buffer: &MockStreamableBuffer{},
+			reader: strings.NewReader("bbbb"),
+			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
+			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+
+				len0 := m.On("Len").Return(4).Once()
+				write0 := m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("aaaa")).Once().NotBefore(len0)
+				reset0 := m.On("Reset").Return().Once().NotBefore(write0)
+				read0 := m.On("SingleReadFrom", r).Return(4, nil).Once().NotBefore(reset0)
+				len1 := m.On("Len").Return(4).Once().NotBefore(read0)
+				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("bbbb")).Once().NotBefore(len1)
+			},
+			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+				m, _ := b.(*MockStreamableBuffer)
+				m.AssertExpectations(t)
+			},
+			toTransfer: 8,
+			wantedData: "aaaabbbb",
+		},
+		{
 			name:   "zero transfer",
 			ctx:    context.Background(),
 			buffer: &MockStreamableBuffer{},
