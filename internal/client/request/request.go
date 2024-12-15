@@ -55,10 +55,6 @@ func (req *StreamRequest) GetToTransfer() int {
 	return req.ToTransfer
 }
 
-func (req *StreamRequest) GetResponseType() message.RequestTypeName {
-	return req.Request.GetRequestType()
-}
-
 func (req *StreamRequest) Stream(
 	ctx context.Context,
 	writer io.Writer,

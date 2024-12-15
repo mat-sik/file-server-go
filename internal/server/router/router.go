@@ -47,7 +47,7 @@ func routeRequest(ctx context.Context, connCtx connection.Context, req message.R
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch req.GetRequestType() {
+	switch req.GetType() {
 	case message.GetFileRequestType:
 		return request.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
@@ -63,7 +63,7 @@ func deliverResponse(ctx context.Context, connCtx connection.Context, res messag
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch res.GetResponseType() {
+	switch res.GetType() {
 	case message.GetFileResponseType:
 		return streamResponse(ctx, connCtx, res)
 	default:

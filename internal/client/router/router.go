@@ -45,7 +45,7 @@ func receiveResponse(
 		return nil, ErrExpectedResponse
 	}
 
-	if res.GetResponseType() == message.GetFileResponseType {
+	if res.GetType() == message.GetFileResponseType {
 		res = enrichRes(res)
 	}
 
@@ -56,7 +56,7 @@ func deliverRequest(ctx context.Context, connCtx connection.Context, req message
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch req.GetRequestType() {
+	switch req.GetType() {
 	case message.PutFileRequestType:
 		return streamRequest(ctx, connCtx, req)
 	default:
@@ -74,19 +74,17 @@ func streamRequest(ctx context.Context, connCtx connection.Context, req message.
 }
 
 func sendRequest(connCtx connection.Context, req message.Request) error {
-	m := req.(message.Message)
-
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
+	return transfer.SendMessage(writer, headerBuffer, messageBuffer, req)
 }
 
 func handleResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
-	switch res.GetResponseType() {
+	switch res.GetType() {
 	case message.GetFileResponseType:
 		return response.HandelGetFileResponse(ctx, connCtx, res)
 	case message.PutFileResponseType:

@@ -50,10 +50,6 @@ func (res *StreamResponse) GetToTransfer() int {
 	return res.ToTransfer
 }
 
-func (res *StreamResponse) GetResponseType() message.ResponseTypeName {
-	return res.Response.GetResponseType()
-}
-
 func (res *StreamResponse) Stream(
 	ctx context.Context,
 	writer io.Writer,
