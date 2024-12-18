@@ -11,26 +11,26 @@ import (
 	"path/filepath"
 )
 
-func NewGetFileRequest(fileName string) (message.Request, error) {
-	return &message.GetFileRequest{Filename: fileName}, nil
+func NewGetFileRequest(fileName string) (message.GetFileRequest, error) {
+	return message.GetFileRequest{Filename: fileName}, nil
 }
 
-func NewPutFileRequest(fileName string) (message.Request, error) {
+func NewPutFileRequest(fileName string) (StreamRequest, error) {
 	path := filepath.Join(envs.ClientDBPath, fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
-		return nil, err
+		return StreamRequest{}, err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return StreamRequest{}, err
 	}
 
 	fileSize := int(fileInfo.Size())
 
 	req := message.PutFileRequest{FileName: fileName, Size: fileSize}
-	return &StreamRequest{
+	return StreamRequest{
 		Request:    &req,
 		File:       file,
 		ToTransfer: fileSize,
@@ -64,6 +64,6 @@ func (req *StreamRequest) Stream(
 	return transfer.StreamFromFile(ctx, writer, headerBuffer, messageBuffer, req)
 }
 
-func NewDeleteFileRequest(fileName string) (message.Request, error) {
-	return &message.DeleteFileRequest{FileName: fileName}, nil
+func NewDeleteFileRequest(fileName string) (message.DeleteFileRequest, error) {
+	return message.DeleteFileRequest{FileName: fileName}, nil
 }
