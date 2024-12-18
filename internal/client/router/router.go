@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
+	"github.com/mat-sik/file-server-go/internal/client/request/decorated"
 	"github.com/mat-sik/file-server-go/internal/client/response"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer"
@@ -18,15 +18,15 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 		return err
 	}
 
-	enrichRes := func(res message.GetFileResponse) enricher.GetFileResponse {
+	decorateRes := func(res message.GetFileResponse) decorated.GetFileResponse {
 		req, ok := req.(*message.GetFileRequest)
 		if !ok {
 			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
 		}
-		return enricher.New(res, req)
+		return decorated.New(res, req)
 	}
 
-	res, err := receiveResponse(connCtx, enrichRes)
+	res, err := receiveResponse(connCtx, decorateRes)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func sendRequest(connCtx connection.Context, req message.Request) error {
 
 func receiveResponse(
 	s connection.Context,
-	enrichRes func(fileResponse message.GetFileResponse) enricher.GetFileResponse,
+	decorateRes func(fileResponse message.GetFileResponse) decorated.GetFileResponse,
 ) (message.Response, error) {
 	var reader io.Reader = s.Conn
 	buffer := s.Buffer
@@ -79,7 +79,7 @@ func receiveResponse(
 
 	if res.GetType() == message.GetFileResponseType {
 		getFileResponse := res.(message.GetFileResponse)
-		res = enrichRes(getFileResponse)
+		res = decorateRes(getFileResponse)
 	}
 
 	return res, nil
@@ -91,7 +91,7 @@ func handleResponse(ctx context.Context, connCtx connection.Context, res message
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := res.(enricher.GetFileResponse)
+		res := res.(decorated.GetFileResponse)
 		return response.HandelGetFileResponse(ctx, connCtx, res)
 	case message.PutFileResponseType:
 		res := res.(message.PutFileResponse)

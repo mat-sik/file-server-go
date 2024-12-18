@@ -3,13 +3,13 @@ package response
 import (
 	"context"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
+	"github.com/mat-sik/file-server-go/internal/client/request/decorated"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
 )
 
-func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res enricher.GetFileResponse) error {
+func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res decorated.GetFileResponse) error {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
