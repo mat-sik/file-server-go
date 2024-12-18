@@ -12,28 +12,28 @@ import (
 	"path/filepath"
 )
 
-func handleGetFileRequest(fileName string) (message.Response, error) {
+func handleGetFileRequest(fileName string) (StreamResponse, error) {
 	path := filepath.Join(envs.ServerDBPath, fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if errors.Is(err, os.ErrNotExist) {
-		return &message.GetFileResponse{Status: 404, Size: 0}, err
+		return StreamResponse{GetFileResponse: message.GetFileResponse{Status: 404, Size: 0}}, err
 	}
 	if err != nil {
-		return nil, err
+		return StreamResponse{}, err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return StreamResponse{}, err
 	}
 
 	fileSize := int(fileInfo.Size())
 	res := message.GetFileResponse{Status: 200, Size: fileSize}
-	return &StreamResponse{Response: &res, File: file, ToTransfer: fileSize}, nil
+	return StreamResponse{GetFileResponse: res, File: file, ToTransfer: fileSize}, nil
 }
 
 type StreamResponse struct {
-	message.Response
+	message.GetFileResponse
 	*os.File
 	ToTransfer int
 }
@@ -65,26 +65,26 @@ func handlePutFileRequest(
 	buffer *limited.Buffer,
 	fileName string,
 	fileSize int,
-) (message.Response, error) {
+) (message.PutFileResponse, error) {
 	defer buffer.Reset()
 
 	path := filepath.Join(envs.ServerDBPath, fileName)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
 	if err != nil {
-		return nil, err
+		return message.PutFileResponse{}, err
 	}
 
 	if err = transfer.Stream(ctx, file, writer, buffer, fileSize); err != nil {
-		return nil, err
+		return message.PutFileResponse{}, err
 	}
 
-	return &message.PutFileResponse{Status: 200}, nil
+	return message.PutFileResponse{Status: 200}, nil
 }
 
-func handleDeleteFileRequest(fileName string) (message.Response, error) {
+func handleDeleteFileRequest(fileName string) (message.DeleteFileResponse, error) {
 	err := os.Remove(fileName)
 	if err != nil {
-		return nil, err
+		return message.DeleteFileResponse{}, err
 	}
-	return &message.DeleteFileResponse{Status: 200}, nil
+	return message.DeleteFileResponse{Status: 200}, nil
 }
