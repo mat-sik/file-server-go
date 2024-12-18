@@ -34,30 +34,6 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 	return handleResponse(ctx, connCtx, res)
 }
 
-func receiveResponse(
-	s connection.Context,
-	enrichRes func(fileResponse message.GetFileResponse) enricher.GetFileResponse,
-) (message.Response, error) {
-	var reader io.Reader = s.Conn
-	buffer := s.Buffer
-	m, err := transfer.ReceiveMessage(reader, buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	res, ok := m.(message.Response)
-	if !ok {
-		return nil, ErrExpectedResponse
-	}
-
-	if res.GetType() == message.GetFileResponseType {
-		getFileResponse := res.(message.GetFileResponse)
-		res = enrichRes(getFileResponse)
-	}
-
-	return res, nil
-}
-
 func deliverRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
@@ -83,6 +59,30 @@ func sendRequest(connCtx connection.Context, req message.Request) error {
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, req)
+}
+
+func receiveResponse(
+	s connection.Context,
+	enrichRes func(fileResponse message.GetFileResponse) enricher.GetFileResponse,
+) (message.Response, error) {
+	var reader io.Reader = s.Conn
+	buffer := s.Buffer
+	m, err := transfer.ReceiveMessage(reader, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	res, ok := m.(message.Response)
+	if !ok {
+		return nil, ErrExpectedResponse
+	}
+
+	if res.GetType() == message.GetFileResponseType {
+		getFileResponse := res.(message.GetFileResponse)
+		res = enrichRes(getFileResponse)
+	}
+
+	return res, nil
 }
 
 func handleResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
