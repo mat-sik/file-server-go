@@ -49,10 +49,13 @@ func routeRequest(ctx context.Context, connCtx connection.Context, req message.R
 
 	switch req.GetType() {
 	case message.GetFileRequestType:
+		req := req.(message.GetFileRequest)
 		return request.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
+		req := req.(message.PutFileRequest)
 		return request.HandlePutFileRequest(ctx, connCtx, req)
 	case message.DeleteFileRequestType:
+		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
 	default:
 		return nil, ErrUnexpectedRequestType
@@ -65,28 +68,25 @@ func deliverResponse(ctx context.Context, connCtx connection.Context, res messag
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
+		res := res.(message.StreamableMessage)
 		return streamResponse(ctx, connCtx, res)
 	default:
 		return sendResponse(connCtx, res)
 	}
 }
 
-func streamResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
-	streamRes := res.(message.StreamableMessage)
-
+func streamResponse(ctx context.Context, connCtx connection.Context, res message.StreamableMessage) error {
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return streamRes.Stream(ctx, writer, headerBuffer, messageBuffer)
+	return res.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
 func sendResponse(connCtx connection.Context, res message.Response) error {
-	m := res.(message.Message)
-
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return transfer.SendMessage(writer, headerBuffer, messageBuffer, m)
+	return transfer.SendMessage(writer, headerBuffer, messageBuffer, res)
 }
 
 const timeForRequest = 5 * time.Second

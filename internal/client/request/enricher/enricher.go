@@ -1,26 +1,17 @@
 package enricher
 
 import (
-	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
 )
 
-func EnrichGetFileResponse(res message.Response, req message.Request) message.Response {
-	getFileRequest, ok := req.(*message.GetFileRequest)
-	if !ok {
-		panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
-	}
-	fileName := getFileRequest.Filename
-
-	getFileResponse := res.(*message.GetFileResponse)
-
-	return &EnrichedGetFileResponse{
-		Response: getFileResponse,
-		Filename: fileName,
+func New(res message.GetFileResponse, req *message.GetFileRequest) GetFileResponse {
+	return GetFileResponse{
+		GetFileResponse: res,
+		Filename:        req.Filename,
 	}
 }
 
-type EnrichedGetFileResponse struct {
-	message.Response
+type GetFileResponse struct {
+	message.GetFileResponse
 	Filename string
 }

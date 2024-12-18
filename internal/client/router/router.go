@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/request/enricher"
 	"github.com/mat-sik/file-server-go/internal/client/response"
 	"github.com/mat-sik/file-server-go/internal/message"
@@ -17,8 +18,12 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 		return err
 	}
 
-	enrichRes := func(res message.Response) message.Response {
-		return enricher.EnrichGetFileResponse(res, req)
+	enrichRes := func(res message.GetFileResponse) enricher.GetFileResponse {
+		req, ok := req.(*message.GetFileRequest)
+		if !ok {
+			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
+		}
+		return enricher.New(res, req)
 	}
 
 	res, err := receiveResponse(connCtx, enrichRes)
@@ -31,7 +36,7 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 
 func receiveResponse(
 	s connection.Context,
-	enrichRes func(message.Response) message.Response,
+	enrichRes func(fileResponse message.GetFileResponse) enricher.GetFileResponse,
 ) (message.Response, error) {
 	var reader io.Reader = s.Conn
 	buffer := s.Buffer
@@ -46,7 +51,8 @@ func receiveResponse(
 	}
 
 	if res.GetType() == message.GetFileResponseType {
-		res = enrichRes(res)
+		getFileResponse := res.(message.GetFileResponse)
+		res = enrichRes(getFileResponse)
 	}
 
 	return res, nil
@@ -58,19 +64,18 @@ func deliverRequest(ctx context.Context, connCtx connection.Context, req message
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
-		return streamRequest(ctx, connCtx, req)
+		streamReq := req.(message.StreamableMessage)
+		return streamRequest(ctx, connCtx, streamReq)
 	default:
 		return sendRequest(connCtx, req)
 	}
 }
 
-func streamRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
-	streamReq := req.(message.StreamableMessage)
-
+func streamRequest(ctx context.Context, connCtx connection.Context, req message.StreamableMessage) error {
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return streamReq.Stream(ctx, writer, headerBuffer, messageBuffer)
+	return req.Stream(ctx, writer, headerBuffer, messageBuffer)
 }
 
 func sendRequest(connCtx connection.Context, req message.Request) error {
@@ -86,10 +91,13 @@ func handleResponse(ctx context.Context, connCtx connection.Context, res message
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
+		res := res.(enricher.GetFileResponse)
 		return response.HandelGetFileResponse(ctx, connCtx, res)
 	case message.PutFileResponseType:
+		res := res.(message.PutFileResponse)
 		response.HandlePutFileResponse(res)
 	case message.DeleteFileResponseType:
+		res := res.(message.DeleteFileResponse)
 		response.HandleDeleteFileResponse(res)
 	default:
 		return ErrUnexpectedResponseType

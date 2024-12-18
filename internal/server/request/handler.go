@@ -6,26 +6,16 @@ import (
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 )
 
-func HandleGetFileRequest(req message.Request) (message.Response, error) {
-	getFileReq := req.(*message.GetFileRequest)
-	fileName := getFileReq.Filename
-
-	return handleGetFileRequest(fileName)
+func HandleGetFileRequest(req message.GetFileRequest) (message.Response, error) {
+	return handleGetFileRequest(req.Filename)
 }
 
-func HandlePutFileRequest(ctx context.Context, connCtx connection.Context, req message.Request) (message.Response, error) {
-	putFileReq := req.(*message.PutFileRequest)
-	fileName := putFileReq.FileName
-	fileSize := putFileReq.Size
-
+func HandlePutFileRequest(ctx context.Context, connCtx connection.Context, req message.PutFileRequest) (message.Response, error) {
 	writer := connCtx.Conn
 	buffer := connCtx.Buffer
-
-	return handlePutFileRequest(ctx, writer, buffer, fileName, fileSize)
+	return handlePutFileRequest(ctx, writer, buffer, req.FileName, req.Size)
 }
 
-func HandleDeleteFileRequest(req message.Request) (message.Response, error) {
-	deleteFileReq := req.(*message.DeleteFileRequest)
-	fileName := deleteFileReq.FileName
-	return handleDeleteFileRequest(fileName)
+func HandleDeleteFileRequest(req message.DeleteFileRequest) (message.Response, error) {
+	return handleDeleteFileRequest(req.FileName)
 }

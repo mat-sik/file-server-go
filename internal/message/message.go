@@ -56,51 +56,57 @@ func TypeNameConverter(typeName TypeName) (Message, error) {
 }
 
 type GetFileRequest struct {
+	Request
 	Filename string
 }
 
-func (req *GetFileRequest) GetType() TypeName {
+func (req GetFileRequest) GetType() TypeName {
 	return GetFileRequestType
 }
 
 type GetFileResponse struct {
+	Response
 	Status int
 	Size   int
 }
 
-func (res *GetFileResponse) GetType() TypeName {
+func (res GetFileResponse) GetType() TypeName {
 	return GetFileResponseType
 }
 
 type PutFileRequest struct {
+	Request
 	FileName string
 	Size     int
 }
 
-func (req *PutFileRequest) GetType() TypeName {
+func (req PutFileRequest) GetType() TypeName {
 	return PutFileRequestType
 }
 
 type PutFileResponse struct {
+	Response
 	Status int
 }
 
-func (res *PutFileResponse) GetType() TypeName {
+func (res PutFileResponse) GetType() TypeName {
 	return PutFileResponseType
 }
 
 type DeleteFileRequest struct {
+	Request
 	FileName string
 }
 
-func (req *DeleteFileRequest) GetType() TypeName {
+func (req DeleteFileRequest) GetType() TypeName {
 	return DeleteFileRequestType
 }
 
 type DeleteFileResponse struct {
+	Response
 	Status int
 }
 
-func (res *DeleteFileResponse) GetType() TypeName {
+func (res DeleteFileResponse) GetType() TypeName {
 	return DeleteFileResponseType
 }

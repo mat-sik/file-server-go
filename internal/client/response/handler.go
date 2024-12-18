@@ -9,39 +9,25 @@ import (
 	"io"
 )
 
-func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
+func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res enricher.GetFileResponse) error {
 	buffer := connCtx.Buffer
 	defer buffer.Reset()
 
-	enrichedGetFileResponse := res.(*enricher.EnrichedGetFileResponse)
-	getFileResponse := enrichedGetFileResponse.Response.(*message.GetFileResponse)
-
-	status := getFileResponse.Status
+	status := res.Status
 	if status != 200 {
 		fmt.Printf("getFileResponse status: %d\n", status)
 	}
 
 	var reader io.Reader = connCtx.Conn
-	fileName := enrichedGetFileResponse.Filename
-	fileSize := getFileResponse.Size
-	if err := handleGetFileResponse(ctx, reader, buffer, fileName, fileSize); err != nil {
-		return err
-	}
-	fmt.Println(getFileResponse)
-
-	return nil
+	return handleGetFileResponse(ctx, reader, buffer, res.Filename, res.Size)
 }
 
-func HandlePutFileResponse(res message.Response) {
-	putFileResponse := res.(*message.PutFileResponse)
-
-	status := putFileResponse.Status
+func HandlePutFileResponse(res message.PutFileResponse) {
+	status := res.Status
 	handlePutFileResponse(status)
 }
 
-func HandleDeleteFileResponse(res message.Response) {
-	deleteFileResponse := res.(*message.DeleteFileResponse)
-
-	status := deleteFileResponse.Status
+func HandleDeleteFileResponse(res message.DeleteFileResponse) {
+	status := res.Status
 	handleDeleteFileResponse(status)
 }
