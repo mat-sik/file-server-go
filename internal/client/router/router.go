@@ -40,6 +40,7 @@ func deliverRequest(ctx context.Context, connCtx connection.Context, req message
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
+		// TODO: add code to handle the put file request.
 		streamReq := req.(message.StreamableMessage)
 		return streamRequest(ctx, connCtx, streamReq)
 	default:

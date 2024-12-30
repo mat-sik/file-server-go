@@ -11,6 +11,7 @@ type Message interface {
 	GetType() TypeName
 }
 
+// StreamableMessage TODO: add reader that will represent the file either coming from tpc socket or os file system.
 type StreamableMessage interface {
 	Stream(ctx context.Context, writer io.Writer, headerBuffer []byte, messageBuffer *limited.Buffer) error
 }
@@ -74,6 +75,7 @@ func (res GetFileResponse) GetType() TypeName {
 	return GetFileResponseType
 }
 
+// PutFileRequest TODO: This type should have information about the amount of bytes of the file.
 type PutFileRequest struct {
 	Request
 	FileName string
