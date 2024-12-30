@@ -77,7 +77,6 @@ func (res GetFileResponse) GetType() TypeName {
 type PutFileRequest struct {
 	Request
 	FileName string
-	Size     int
 }
 
 func (req PutFileRequest) GetType() TypeName {
