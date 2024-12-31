@@ -39,7 +39,7 @@ func receiveRequest(connCtx connection.Context) (message.Request, error) {
 
 	req, ok := m.(message.Request)
 	if !ok {
-		return nil, ErrExpectedRequest
+		return nil, errors.New("expected request, received different type")
 	}
 	return req, nil
 }
@@ -62,7 +62,7 @@ func routeRequest(ctx context.Context, connCtx connection.Context, req message.R
 		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
 	default:
-		return nil, ErrUnexpectedRequestType
+		return nil, errors.New("unexpected request type")
 	}
 }
 
@@ -128,8 +128,3 @@ func sendResponse(connCtx connection.Context, res message.Response) error {
 }
 
 const timeForRequest = 5 * time.Second
-
-var (
-	ErrUnexpectedRequestType = errors.New("unexpected request type")
-	ErrExpectedRequest       = errors.New("expected request, received different type")
-)

@@ -38,22 +38,27 @@ func DecodeHeader(buffer *limited.Buffer) Header {
 }
 
 func encodeMessageSize(messageSize uint32, headerBuffer []byte) error {
-	if cap(headerBuffer) < uint32ByteSize {
-		return ErrHeaderBufferTooSmall
+	if err := validateHeaderBufferSize(headerBuffer, uint32ByteSize); err != nil {
+		return err
 	}
 	binary.BigEndian.PutUint32(headerBuffer, messageSize)
 	return nil
 }
 
 func encodeMessageType(messageType message.TypeName, headerBuffer []byte) error {
-	if cap(headerBuffer) < uint64ByteSize {
-		return ErrHeaderBufferTooSmall
+	if err := validateHeaderBufferSize(headerBuffer, uint64ByteSize); err != nil {
+		return err
 	}
 	binary.BigEndian.PutUint64(headerBuffer, uint64(messageType))
 	return nil
 }
 
-var ErrHeaderBufferTooSmall = errors.New("header buffer too small")
+func validateHeaderBufferSize(headerBuffer []byte, size int) error {
+	if cap(headerBuffer) < size {
+		return errors.New("header buffer too small")
+	}
+	return nil
+}
 
 const (
 	uint32ByteSize = 4

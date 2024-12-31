@@ -91,7 +91,7 @@ func receiveResponse(
 
 	res, ok := m.(message.Response)
 	if !ok {
-		return nil, ErrExpectedResponse
+		return nil, errors.New("expected response, received different type")
 	}
 
 	if res.GetType() == message.GetFileResponseType {
@@ -117,15 +117,10 @@ func handleResponse(ctx context.Context, connCtx connection.Context, res message
 		res := res.(message.DeleteFileResponse)
 		response.HandleDeleteFileResponse(res)
 	default:
-		return ErrUnexpectedResponseType
+		return errors.New("unexpected response type")
 	}
 
 	return nil
 }
 
 const timeForRequest = 5 * time.Second
-
-var (
-	ErrExpectedResponse       = errors.New("expected response, received different type")
-	ErrUnexpectedResponseType = errors.New("unexpected response type")
-)
