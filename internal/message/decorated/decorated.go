@@ -4,14 +4,14 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 )
 
-func New(res message.GetFileResponse, req *message.GetFileRequest) GetFileResponse {
+func New(res message.GetFileResponse, fileName string) GetFileResponse {
 	return GetFileResponse{
 		GetFileResponse: res,
-		Filename:        req.Filename,
+		FileName:        fileName,
 	}
 }
 
 type GetFileResponse struct {
 	message.GetFileResponse
-	Filename string
+	FileName string
 }

@@ -3,11 +3,12 @@ package request
 import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 )
 
-func HandleGetFileRequest(req message.GetFileRequest) (StreamResponse, error) {
-	return handleGetFileRequest(req.Filename)
+func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse {
+	return handleGetFileRequest(req.FileName)
 }
 
 func HandlePutFileRequest(

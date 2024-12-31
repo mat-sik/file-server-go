@@ -3,11 +3,15 @@ package router
 import (
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/file"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/server/request"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
+	"net/http"
+	"os"
 	"time"
 )
 
@@ -50,7 +54,7 @@ func routeRequest(ctx context.Context, connCtx connection.Context, req message.R
 	switch req.GetType() {
 	case message.GetFileRequestType:
 		req := req.(message.GetFileRequest)
-		return request.HandleGetFileRequest(req)
+		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
 		req := req.(message.PutFileRequest)
 		return request.HandlePutFileRequest(ctx, connCtx, req)
@@ -68,18 +72,52 @@ func deliverResponse(ctx context.Context, connCtx connection.Context, res messag
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := res.(message.StreamableMessage)
-		return streamResponse(ctx, connCtx, res)
+		res := res.(decorated.GetFileResponse)
+		return sendGetFileResponse(ctx, connCtx, res)
 	default:
 		return sendResponse(connCtx, res)
 	}
 }
 
-func streamResponse(ctx context.Context, connCtx connection.Context, res message.StreamableMessage) error {
+func sendGetFileResponse(ctx context.Context, connCtx connection.Context, res decorated.GetFileResponse) error {
+	f, err := os.Open(res.FileName)
+	if errors.Is(err, os.ErrNotExist) {
+		return sendNotFoundResponse(connCtx, res)
+	} else if err != nil {
+		return err
+	}
+	defer file.Close(f)
+
+	return streamFileResponse(ctx, connCtx, f, res)
+}
+
+func streamFileResponse(
+	ctx context.Context,
+	connCtx connection.Context,
+	f *os.File,
+	res decorated.GetFileResponse,
+) error {
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return res.Stream(ctx, writer, headerBuffer, messageBuffer)
+
+	fileSize, err := file.GetSize(f)
+	if err != nil {
+		return err
+	}
+	res.Size = fileSize
+
+	if err = transfer.SendMessage(writer, headerBuffer, messageBuffer, res.GetFileResponse); err != nil {
+		return err
+	}
+	return transfer.Stream(ctx, f, writer, messageBuffer, res.Size)
+}
+
+func sendNotFoundResponse(connCtx connection.Context, res decorated.GetFileResponse) error {
+	res.GetFileResponse.Status = http.StatusNotFound
+	res.Size = 0
+
+	return sendResponse(connCtx, res)
 }
 
 func sendResponse(connCtx connection.Context, res message.Response) error {

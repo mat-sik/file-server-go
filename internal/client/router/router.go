@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/request/decorated"
 	"github.com/mat-sik/file-server-go/internal/client/response"
+	"github.com/mat-sik/file-server-go/internal/file"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/transfer"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
+	"os"
 	"time"
 )
 
@@ -23,7 +25,7 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 		if !ok {
 			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
 		}
-		return decorated.New(res, req)
+		return decorated.New(res, req.FileName)
 	}
 
 	res, err := receiveResponse(connCtx, decorateRes)
@@ -40,19 +42,33 @@ func deliverRequest(ctx context.Context, connCtx connection.Context, req message
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
-		// TODO: add code to handle the put file request.
-		streamReq := req.(message.StreamableMessage)
-		return streamRequest(ctx, connCtx, streamReq)
+		req := req.(*message.PutFileRequest)
+		return streamRequest(ctx, connCtx, req)
 	default:
 		return sendRequest(connCtx, req)
 	}
 }
 
-func streamRequest(ctx context.Context, connCtx connection.Context, req message.StreamableMessage) error {
+func streamRequest(ctx context.Context, connCtx connection.Context, req *message.PutFileRequest) error {
 	var writer io.Writer = connCtx.Conn
 	headerBuffer := connCtx.HeaderBuffer
 	messageBuffer := connCtx.Buffer
-	return req.Stream(ctx, writer, headerBuffer, messageBuffer)
+
+	defer messageBuffer.Reset()
+
+	f, err := os.Open(req.FileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close(f)
+
+	fileSize, err := file.GetSize(f)
+	req.Size = fileSize
+
+	if err = transfer.SendMessage(writer, headerBuffer, messageBuffer, req); err != nil {
+		return err
+	}
+	return transfer.Stream(ctx, f, writer, messageBuffer, fileSize)
 }
 
 func sendRequest(connCtx connection.Context, req message.Request) error {

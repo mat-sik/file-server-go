@@ -3,8 +3,8 @@ package response
 import (
 	"context"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/client/request/decorated"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"io"
 )
@@ -19,7 +19,7 @@ func HandelGetFileResponse(ctx context.Context, connCtx connection.Context, res 
 	}
 
 	var reader io.Reader = connCtx.Conn
-	return handleGetFileResponse(ctx, reader, buffer, res.Filename, res.Size)
+	return handleGetFileResponse(ctx, reader, buffer, res.FileName, res.Size)
 }
 
 func HandlePutFileResponse(res message.PutFileResponse) {

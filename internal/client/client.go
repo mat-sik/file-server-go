@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"github.com/mat-sik/file-server-go/internal/client/request"
 	"github.com/mat-sik/file-server-go/internal/client/router"
+	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"net"
 )
@@ -16,10 +16,7 @@ func RunClient(ctx context.Context, hostname string) error {
 
 	connCtx := connection.NewContext(conn)
 
-	req, err := request.NewGetFileRequest("foo.txt")
-	if err != nil {
-		return err
-	}
+	req := message.GetFileRequest{FileName: "foo.txt"}
 
 	if err = router.HandleRequest(ctx, connCtx, req); err != nil {
 		return err
