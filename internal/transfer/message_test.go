@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
-	"io"
 	"testing"
 )
 
@@ -16,16 +16,24 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	messageBuffer := limited.NewBuffer(make([]byte, 0, 1024))
 	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	var sendSocket io.Writer = buffer
-	err := SendMessage(sendSocket, sizeBuffer, messageBuffer, &in)
+	readWriteCloser := &mockReadWriteCloser{Buffer: *buffer}
+
+	connCtx := connection.Context{
+		ReadWriteCloser: readWriteCloser,
+		Buffer:          messageBuffer,
+		HeaderBuffer:    sizeBuffer,
+	}
+
+	messageDispatcher := MessageDispatcher{Context: connCtx}
+
+	err := messageDispatcher.SendMessage(in)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	messageBuffer.Reset()
 
-	var readSocket io.Reader = buffer
-	out, err := ReceiveMessage(readSocket, messageBuffer)
+	out, err := messageDispatcher.ReceiveMessage()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,4 +44,12 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	default:
 		fmt.Printf("%v", v)
 	}
+}
+
+type mockReadWriteCloser struct {
+	bytes.Buffer
+}
+
+func (mock *mockReadWriteCloser) Close() error {
+	return nil
 }

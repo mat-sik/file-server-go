@@ -8,15 +8,13 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/server/request"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
-	"io"
 	"net/http"
 	"os"
 	"time"
 )
 
 type ServerRouter struct {
-	connection.Context
+	transfer.MessageDispatcher
 }
 
 func (serverRouter ServerRouter) HandleRequest(ctx context.Context) error {
@@ -34,9 +32,7 @@ func (serverRouter ServerRouter) HandleRequest(ctx context.Context) error {
 }
 
 func (serverRouter ServerRouter) receiveRequest() (message.Request, error) {
-	var reader io.Reader = serverRouter.Conn
-	buffer := serverRouter.Buffer
-	m, err := transfer.ReceiveMessage(reader, buffer)
+	m, err := serverRouter.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +45,7 @@ func (serverRouter ServerRouter) receiveRequest() (message.Request, error) {
 }
 
 func (serverRouter ServerRouter) routeRequest(ctx context.Context, req message.Request) (message.Response, error) {
-	buffer := serverRouter.Buffer
-	defer buffer.Reset()
+	defer serverRouter.Buffer.Reset()
 
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
@@ -61,7 +56,7 @@ func (serverRouter ServerRouter) routeRequest(ctx context.Context, req message.R
 		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
 		req := req.(message.PutFileRequest)
-		return request.HandlePutFileRequest(ctx, serverRouter.Conn, serverRouter.Buffer, req)
+		return request.HandlePutFileRequest(ctx, serverRouter, serverRouter.Buffer, req)
 	case message.DeleteFileRequestType:
 		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
@@ -79,7 +74,7 @@ func (serverRouter ServerRouter) deliverResponse(ctx context.Context, res messag
 		res := res.(decorated.GetFileResponse)
 		return serverRouter.sendGetFileResponse(ctx, res)
 	default:
-		return serverRouter.sendResponse(res)
+		return serverRouter.SendMessage(res)
 	}
 }
 
@@ -100,34 +95,23 @@ func (serverRouter ServerRouter) streamFileResponse(
 	f *os.File,
 	res decorated.GetFileResponse,
 ) error {
-	var writer io.Writer = serverRouter.Conn
-	headerBuffer := serverRouter.HeaderBuffer
-	messageBuffer := serverRouter.Buffer
-
 	fileSize, err := file.GetSize(f)
 	if err != nil {
 		return err
 	}
 	res.Size = fileSize
 
-	if err = transfer.SendMessage(writer, headerBuffer, messageBuffer, res.GetFileResponse); err != nil {
+	if err = serverRouter.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return transfer.Stream(ctx, f, writer, messageBuffer, res.Size)
+	return transfer.Stream(ctx, f, serverRouter, serverRouter.Buffer, res.Size)
 }
 
 func (serverRouter ServerRouter) sendNotFoundResponse(res decorated.GetFileResponse) error {
 	res.GetFileResponse.Status = http.StatusNotFound
 	res.Size = 0
 
-	return serverRouter.sendResponse(res)
-}
-
-func (serverRouter ServerRouter) sendResponse(res message.Response) error {
-	var writer io.Writer = serverRouter.Conn
-	headerBuffer := serverRouter.HeaderBuffer
-	messageBuffer := serverRouter.Buffer
-	return transfer.SendMessage(writer, headerBuffer, messageBuffer, res)
+	return serverRouter.SendMessage(res)
 }
 
 const timeForRequest = 5 * time.Second

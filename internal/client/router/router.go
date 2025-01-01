@@ -9,14 +9,12 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
-	"io"
 	"os"
 	"time"
 )
 
 type ClientRouter struct {
-	connection.Context
+	transfer.MessageDispatcher
 }
 
 func (clientRouter ClientRouter) HandleRequest(ctx context.Context, req message.Request) error {
@@ -49,16 +47,12 @@ func (clientRouter ClientRouter) deliverRequest(ctx context.Context, req message
 		req := req.(*message.PutFileRequest)
 		return clientRouter.streamRequest(ctx, req)
 	default:
-		return clientRouter.sendRequest(req)
+		return clientRouter.SendMessage(req)
 	}
 }
 
 func (clientRouter ClientRouter) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
-	var writer io.Writer = clientRouter.Conn
-	headerBuffer := clientRouter.HeaderBuffer
-	messageBuffer := clientRouter.Buffer
-
-	defer messageBuffer.Reset()
+	defer clientRouter.Buffer.Reset()
 
 	f, err := os.Open(req.FileName)
 	if err != nil {
@@ -69,25 +63,16 @@ func (clientRouter ClientRouter) streamRequest(ctx context.Context, req *message
 	fileSize, err := file.GetSize(f)
 	req.Size = fileSize
 
-	if err = transfer.SendMessage(writer, headerBuffer, messageBuffer, req); err != nil {
+	if err = clientRouter.SendMessage(req); err != nil {
 		return err
 	}
-	return transfer.Stream(ctx, f, writer, messageBuffer, fileSize)
-}
-
-func (clientRouter ClientRouter) sendRequest(req message.Request) error {
-	var writer io.Writer = clientRouter.Conn
-	headerBuffer := clientRouter.HeaderBuffer
-	messageBuffer := clientRouter.Buffer
-	return transfer.SendMessage(writer, headerBuffer, messageBuffer, req)
+	return transfer.Stream(ctx, f, clientRouter, clientRouter.Buffer, fileSize)
 }
 
 func (clientRouter ClientRouter) receiveResponse(
 	decorateRes func(fileResponse message.GetFileResponse) decorated.GetFileResponse,
 ) (message.Response, error) {
-	var reader io.Reader = clientRouter.Conn
-	buffer := clientRouter.Buffer
-	m, err := transfer.ReceiveMessage(reader, buffer)
+	m, err := clientRouter.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +91,12 @@ func (clientRouter ClientRouter) receiveResponse(
 }
 
 func (clientRouter ClientRouter) handleResponse(ctx context.Context, res message.Response) error {
-	buffer := clientRouter.Buffer
-	defer buffer.Reset()
+	defer clientRouter.Buffer.Reset()
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
 		res := res.(decorated.GetFileResponse)
-		return response.HandelGetFileResponse(ctx, clientRouter.Conn, clientRouter.Buffer, res)
+		return response.HandelGetFileResponse(ctx, clientRouter, clientRouter.Buffer, res)
 	case message.PutFileResponseType:
 		res := res.(message.PutFileResponse)
 		response.HandlePutFileResponse(res)
