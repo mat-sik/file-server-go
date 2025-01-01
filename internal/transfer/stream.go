@@ -47,9 +47,9 @@ func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer Stre
 
 func ctxEarlyReturn(ctx context.Context) error {
 	select {
-	default:
-		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	default:
+		return nil
 	}
 }
