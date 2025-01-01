@@ -9,14 +9,14 @@ import (
 	"net"
 )
 
-type Buffer interface {
-	StreamBuffer
-	MessageBuffer
+type buffer interface {
+	streamBuffer
+	messageBuffer
 }
 
 type Session struct {
 	Conn         io.ReadWriteCloser
-	Buffer       Buffer
+	Buffer       buffer
 	HeaderBuffer []byte
 }
 
@@ -37,11 +37,11 @@ func (s Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer
 }
 
 func NewSession(conn net.Conn) Session {
-	buffer := limited.NewBuffer(make([]byte, 0, bufferSize))
+	limitedBuffer := limited.NewBuffer(make([]byte, 0, bufferSize))
 	headerBuffer := make([]byte, header.Size)
 	return Session{
 		Conn:         conn,
-		Buffer:       buffer,
+		Buffer:       limitedBuffer,
 		HeaderBuffer: headerBuffer,
 	}
 }

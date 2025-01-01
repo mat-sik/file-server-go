@@ -12,14 +12,14 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	//
 	in := message.PutFileRequest{FileName: "huge_file_name", Size: 404}
 	sizeBuffer := make([]byte, 12)
-	messageBuffer := limited.NewBuffer(make([]byte, 0, 1024))
-	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
+	limitedBuffer := limited.NewBuffer(make([]byte, 0, 1024))
+	bytesBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
 
-	readWriteCloser := &mockReadWriteCloser{Buffer: *buffer}
+	readWriteCloser := &mockReadWriteCloser{Buffer: *bytesBuffer}
 
 	messageDispatcher := Session{
 		Conn:         readWriteCloser,
-		Buffer:       messageBuffer,
+		Buffer:       limitedBuffer,
 		HeaderBuffer: sizeBuffer,
 	}
 
@@ -28,7 +28,7 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	messageBuffer.Reset()
+	limitedBuffer.Reset()
 
 	out, err := messageDispatcher.ReceiveMessage()
 	if err != nil {

@@ -6,14 +6,14 @@ import (
 	"io"
 )
 
-type StreamBuffer interface {
+type streamBuffer interface {
 	limited.SingleWriterTo
 	limited.SingleReaderFrom
 	limited.Resettable
 	limited.ReadableLength
 }
 
-func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer StreamBuffer, toTransfer int) error {
+func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer streamBuffer, toTransfer int) error {
 	if toTransfer == 0 {
 		return nil
 	}

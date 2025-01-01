@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-type MessageBuffer interface {
+type messageBuffer interface {
 	io.WriterTo
 	io.Writer
 	io.Reader
@@ -18,7 +18,7 @@ type MessageBuffer interface {
 	limited.ReadableLength
 }
 
-func sendMessage(mess message.Message, headerBuffer []byte, buffer MessageBuffer, writer io.Writer) error {
+func sendMessage(mess message.Message, headerBuffer []byte, buffer messageBuffer, writer io.Writer) error {
 	defer buffer.Reset()
 
 	encoder := json.NewEncoder(buffer)
@@ -45,7 +45,7 @@ func sendMessage(mess message.Message, headerBuffer []byte, buffer MessageBuffer
 	return nil
 }
 
-func receiveMessage(reader io.Reader, buffer MessageBuffer) (message.Message, error) {
+func receiveMessage(reader io.Reader, buffer messageBuffer) (message.Message, error) {
 	if err := buffer.ReadMin(reader, header.Size); err != nil {
 		return nil, err
 	}
