@@ -32,12 +32,12 @@ func (sh SessionHandler) HandleRequest(ctx context.Context) error {
 }
 
 func (sh SessionHandler) receiveRequest() (message.Request, error) {
-	m, err := sh.ReceiveMessage()
+	mess, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	req, ok := m.(message.Request)
+	req, ok := mess.(message.Request)
 	if !ok {
 		return nil, errors.New("expected request, received different type")
 	}
@@ -79,15 +79,15 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 }
 
 func (sh SessionHandler) sendGetFileResponse(ctx context.Context, res decorated.GetFileResponse) error {
-	f, err := os.Open(res.FileName)
+	file, err := os.Open(res.FileName)
 	if errors.Is(err, os.ErrNotExist) {
 		return sh.sendNotFoundResponse(res)
 	} else if err != nil {
 		return err
 	}
-	defer files.Close(f)
+	defer files.Close(file)
 
-	return sh.streamFileResponse(ctx, f, res)
+	return sh.streamFileResponse(ctx, file, res)
 }
 
 func (sh SessionHandler) streamFileResponse(

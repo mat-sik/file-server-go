@@ -72,12 +72,12 @@ func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFile
 func (sh SessionHandler) receiveResponse(
 	decorateRes func(fileResponse message.GetFileResponse) decorated.GetFileResponse,
 ) (message.Response, error) {
-	m, err := sh.ReceiveMessage()
+	mess, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	res, ok := m.(message.Response)
+	res, ok := mess.(message.Response)
 	if !ok {
 		return nil, errors.New("expected response, received different type")
 	}
