@@ -46,8 +46,9 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	defer safeConnectionClose(conn)
 
 	connCtx := connection.NewContext(conn)
+	serverRouter := router.ServerRouter{Context: connCtx}
 
-	if err := router.HandleRequest(ctx, connCtx); err != nil {
+	if err := serverRouter.HandleRequest(ctx); err != nil {
 		errCh <- err
 	}
 }

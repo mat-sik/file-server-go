@@ -15,10 +15,11 @@ func RunClient(ctx context.Context, hostname string) error {
 	}
 
 	connCtx := connection.NewContext(conn)
+	clientRouter := router.ClientRouter{Context: connCtx}
 
 	req := message.GetFileRequest{FileName: "foo.txt"}
 
-	if err = router.HandleRequest(ctx, connCtx, req); err != nil {
+	if err = clientRouter.HandleRequest(ctx, req); err != nil {
 		return err
 	}
 
