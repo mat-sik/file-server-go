@@ -6,22 +6,14 @@ import (
 	"io"
 )
 
-func (d MessageDispatcher) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
-	return stream(ctx, reader, d.Conn, d.Buffer, toTransfer)
-}
-
-func (d MessageDispatcher) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
-	return stream(ctx, d.Conn, writer, d.Buffer, toTransfer)
-}
-
-type Streamer interface {
+type StreamBuffer interface {
 	limited.SingleWriterTo
 	limited.SingleReaderFrom
 	limited.Resettable
 	limited.ReadableLength
 }
 
-func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer Streamer, toTransfer int) error {
+func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer StreamBuffer, toTransfer int) error {
 	if toTransfer == 0 {
 		return nil
 	}
