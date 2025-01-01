@@ -2,25 +2,46 @@ package request
 
 import (
 	"context"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
+	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
+	"io"
+	"os"
+	"path/filepath"
 )
 
 func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse {
-	return handleGetFileRequest(req.FileName)
+	res := message.GetFileResponse{}
+	return decorated.New(res, req.FileName)
 }
 
 func HandlePutFileRequest(
 	ctx context.Context,
-	connCtx connection.Context,
+	writer io.Writer,
+	buffer *limited.Buffer,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
-	writer := connCtx.Conn
-	buffer := connCtx.Buffer
-	return handlePutFileRequest(ctx, writer, buffer, req.FileName, req.Size)
+	defer buffer.Reset()
+
+	path := filepath.Join(envs.ServerDBPath, req.FileName)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	if err != nil {
+		return message.PutFileResponse{}, err
+	}
+
+	if err = transfer.Stream(ctx, file, writer, buffer, req.Size); err != nil {
+		return message.PutFileResponse{}, err
+	}
+
+	return message.PutFileResponse{Status: 200}, nil
 }
 
 func HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
-	return handleDeleteFileRequest(req.FileName)
+	err := os.Remove(req.FileName)
+	if err != nil {
+		return message.DeleteFileResponse{}, err
+	}
+	return message.DeleteFileResponse{Status: 200}, nil
 }

@@ -61,7 +61,7 @@ func (serverRouter ServerRouter) routeRequest(ctx context.Context, req message.R
 		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
 		req := req.(message.PutFileRequest)
-		return request.HandlePutFileRequest(ctx, serverRouter.Context, req)
+		return request.HandlePutFileRequest(ctx, serverRouter.Conn, serverRouter.Buffer, req)
 	case message.DeleteFileRequestType:
 		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
