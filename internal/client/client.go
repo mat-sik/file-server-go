@@ -13,8 +13,8 @@ func RunClient(ctx context.Context, hostname string) error {
 		return err
 	}
 
-	messageDispatcher := netmsg.NewSession(conn)
-	sessionHandler := SessionHandler{Session: messageDispatcher}
+	session := netmsg.NewSession(conn)
+	sessionHandler := SessionHandler{Session: session}
 
 	req := message.GetFileRequest{FileName: "foo.txt"}
 
