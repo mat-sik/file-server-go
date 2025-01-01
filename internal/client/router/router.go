@@ -29,7 +29,7 @@ func (clientRouter ClientRouter) HandleRequest(ctx context.Context, req message.
 		if !ok {
 			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
 		}
-		return decorated.New(res, req.FileName)
+		return decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
 	}
 
 	res, err := clientRouter.receiveResponse(decorateRes)

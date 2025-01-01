@@ -14,7 +14,7 @@ import (
 
 func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse {
 	res := message.GetFileResponse{}
-	return decorated.New(res, req.FileName)
+	return decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
 }
 
 func HandlePutFileRequest(
