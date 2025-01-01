@@ -13,29 +13,29 @@ import (
 
 func HandelGetFileResponse(
 	ctx context.Context,
-	dispatcher netmsg.Session,
+	session netmsg.Session,
 	res decorated.GetFileResponse,
 ) error {
 	if res.Status != 200 {
 		fmt.Printf("getFileResponse status: %d\n", res.Status)
 	}
-	return handleGetFileResponse(ctx, dispatcher, res.FileName, res.Size)
+	return handleGetFileResponse(ctx, session, res.FileName, res.Size)
 }
 
 func handleGetFileResponse(
 	ctx context.Context,
-	dispatcher netmsg.Session,
+	session netmsg.Session,
 	fileName string,
 	fileSize int,
 ) error {
-	defer dispatcher.Buffer.Reset()
+	defer session.Buffer.Reset()
 
 	path := filepath.Join(envs.ClientDBPath, fileName)
 	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	return dispatcher.StreamFromNet(ctx, file, fileSize)
+	return session.StreamFromNet(ctx, file, fileSize)
 }
 
 func HandlePutFileResponse(res message.PutFileResponse) {
