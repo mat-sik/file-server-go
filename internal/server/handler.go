@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/file"
+	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
@@ -85,17 +85,17 @@ func (sh SessionHandler) sendGetFileResponse(ctx context.Context, res decorated.
 	} else if err != nil {
 		return err
 	}
-	defer file.Close(f)
+	defer files.Close(f)
 
 	return sh.streamFileResponse(ctx, f, res)
 }
 
 func (sh SessionHandler) streamFileResponse(
 	ctx context.Context,
-	f *os.File,
+	file *os.File,
 	res decorated.GetFileResponse,
 ) error {
-	fileSize, err := file.GetSize(f)
+	fileSize, err := files.GetSize(file)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (sh SessionHandler) streamFileResponse(
 	if err = sh.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return sh.StreamToNet(ctx, f, res.Size)
+	return sh.StreamToNet(ctx, file, res.Size)
 }
 
 func (sh SessionHandler) sendNotFoundResponse(res decorated.GetFileResponse) error {

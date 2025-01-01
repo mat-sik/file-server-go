@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/response"
-	"github.com/mat-sik/file-server-go/internal/file"
+	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
@@ -54,19 +54,19 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
 	defer sh.Buffer.Reset()
 
-	f, err := os.Open(req.FileName)
+	file, err := os.Open(req.FileName)
 	if err != nil {
 		return err
 	}
-	defer file.Close(f)
+	defer files.Close(file)
 
-	fileSize, err := file.GetSize(f)
+	fileSize, err := files.GetSize(file)
 	req.Size = fileSize
 
 	if err = sh.SendMessage(req); err != nil {
 		return err
 	}
-	return sh.StreamToNet(ctx, f, fileSize)
+	return sh.StreamToNet(ctx, file, fileSize)
 }
 
 func (sh SessionHandler) receiveResponse(
