@@ -6,12 +6,12 @@ import (
 	"io"
 )
 
-func (dispatcher MessageDispatcher) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
-	return stream(ctx, reader, dispatcher.ReadWriteCloser, dispatcher.Buffer, toTransfer)
+func (d MessageDispatcher) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
+	return stream(ctx, reader, d.Conn, d.Buffer, toTransfer)
 }
 
-func (dispatcher MessageDispatcher) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
-	return stream(ctx, dispatcher.ReadWriteCloser, writer, dispatcher.Buffer, toTransfer)
+func (d MessageDispatcher) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
+	return stream(ctx, d.Conn, writer, d.Buffer, toTransfer)
 }
 
 type Streamer interface {

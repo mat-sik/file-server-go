@@ -18,44 +18,42 @@ type Messenger interface {
 	limited.ReadableLength
 }
 
-func (dispatcher MessageDispatcher) SendMessage(
-	m message.Message,
-) error {
-	defer dispatcher.Buffer.Reset()
+func (d MessageDispatcher) SendMessage(m message.Message) error {
+	defer d.Buffer.Reset()
 
-	encoder := json.NewEncoder(dispatcher.Buffer)
+	encoder := json.NewEncoder(d.Buffer)
 	if err := encoder.Encode(m); err != nil {
 		return err
 	}
 
-	messageSize := uint32(dispatcher.Buffer.Len())
+	messageSize := uint32(d.Buffer.Len())
 	messageType := m.GetType()
 	messageHeader := header.Header{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
 	}
-	if err := header.EncodeHeader(messageHeader, dispatcher.HeaderBuffer); err != nil {
+	if err := header.EncodeHeader(messageHeader, d.HeaderBuffer); err != nil {
 		return err
 	}
 
-	if _, err := dispatcher.ReadWriteCloser.Write(dispatcher.HeaderBuffer); err != nil {
+	if _, err := d.Conn.Write(d.HeaderBuffer); err != nil {
 		return err
 	}
-	if _, err := dispatcher.Buffer.WriteTo(dispatcher.ReadWriteCloser); err != nil {
+	if _, err := d.Buffer.WriteTo(d.Conn); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (dispatcher MessageDispatcher) ReceiveMessage() (message.Message, error) {
-	if err := dispatcher.Buffer.EnsureBufferedAtLeastN(dispatcher.ReadWriteCloser, header.Size); err != nil {
+func (d MessageDispatcher) ReceiveMessage() (message.Message, error) {
+	if err := d.Buffer.EnsureBufferedAtLeastN(d.Conn, header.Size); err != nil {
 		return nil, err
 	}
 
-	messageHeader := header.DecodeHeader(dispatcher.Buffer)
+	messageHeader := header.DecodeHeader(d.Buffer)
 
-	toRead := messageHeader.PayloadSize - uint32(dispatcher.Buffer.Len())
-	if err := dispatcher.Buffer.EnsureBufferedAtLeastN(dispatcher.ReadWriteCloser, int(toRead)); err != nil {
+	toRead := messageHeader.PayloadSize - uint32(d.Buffer.Len())
+	if err := d.Buffer.EnsureBufferedAtLeastN(d.Conn, int(toRead)); err != nil {
 		return nil, err
 	}
 
@@ -64,7 +62,7 @@ func (dispatcher MessageDispatcher) ReceiveMessage() (message.Message, error) {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(dispatcher.Buffer)
+	decoder := json.NewDecoder(d.Buffer)
 	if err = decoder.Decode(m); err != nil {
 		return nil, err
 	}

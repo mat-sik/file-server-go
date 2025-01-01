@@ -8,7 +8,7 @@ import (
 )
 
 type MessageDispatcher struct {
-	io.ReadWriteCloser
+	Conn         io.ReadWriteCloser
 	Buffer       Buffer
 	HeaderBuffer []byte
 }
@@ -22,9 +22,9 @@ func NewMessageDispatcher(conn net.Conn) MessageDispatcher {
 	buffer := limited.NewBuffer(make([]byte, 0, bufferSize))
 	headerBuffer := make([]byte, header.Size)
 	return MessageDispatcher{
-		ReadWriteCloser: conn,
-		Buffer:          buffer,
-		HeaderBuffer:    headerBuffer,
+		Conn:         conn,
+		Buffer:       buffer,
+		HeaderBuffer: headerBuffer,
 	}
 }
 
