@@ -15,8 +15,12 @@ import (
 	"time"
 )
 
-func HandleRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
-	if err := deliverRequest(ctx, connCtx, req); err != nil {
+type ClientRouter struct {
+	connection.Context
+}
+
+func (clientRouter ClientRouter) HandleRequest(ctx context.Context, req message.Request) error {
+	if err := clientRouter.deliverRequest(ctx, req); err != nil {
 		return err
 	}
 
@@ -28,31 +32,31 @@ func HandleRequest(ctx context.Context, connCtx connection.Context, req message.
 		return decorated.New(res, req.FileName)
 	}
 
-	res, err := receiveResponse(connCtx, decorateRes)
+	res, err := clientRouter.receiveResponse(decorateRes)
 	if err != nil {
 		return err
 	}
 
-	return handleResponse(ctx, connCtx, res)
+	return clientRouter.handleResponse(ctx, res)
 }
 
-func deliverRequest(ctx context.Context, connCtx connection.Context, req message.Request) error {
+func (clientRouter ClientRouter) deliverRequest(ctx context.Context, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
 		req := req.(*message.PutFileRequest)
-		return streamRequest(ctx, connCtx, req)
+		return clientRouter.streamRequest(ctx, req)
 	default:
-		return sendRequest(connCtx, req)
+		return clientRouter.sendRequest(req)
 	}
 }
 
-func streamRequest(ctx context.Context, connCtx connection.Context, req *message.PutFileRequest) error {
-	var writer io.Writer = connCtx.Conn
-	headerBuffer := connCtx.HeaderBuffer
-	messageBuffer := connCtx.Buffer
+func (clientRouter ClientRouter) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
+	var writer io.Writer = clientRouter.Conn
+	headerBuffer := clientRouter.HeaderBuffer
+	messageBuffer := clientRouter.Buffer
 
 	defer messageBuffer.Reset()
 
@@ -71,19 +75,18 @@ func streamRequest(ctx context.Context, connCtx connection.Context, req *message
 	return transfer.Stream(ctx, f, writer, messageBuffer, fileSize)
 }
 
-func sendRequest(connCtx connection.Context, req message.Request) error {
-	var writer io.Writer = connCtx.Conn
-	headerBuffer := connCtx.HeaderBuffer
-	messageBuffer := connCtx.Buffer
+func (clientRouter ClientRouter) sendRequest(req message.Request) error {
+	var writer io.Writer = clientRouter.Conn
+	headerBuffer := clientRouter.HeaderBuffer
+	messageBuffer := clientRouter.Buffer
 	return transfer.SendMessage(writer, headerBuffer, messageBuffer, req)
 }
 
-func receiveResponse(
-	s connection.Context,
+func (clientRouter ClientRouter) receiveResponse(
 	decorateRes func(fileResponse message.GetFileResponse) decorated.GetFileResponse,
 ) (message.Response, error) {
-	var reader io.Reader = s.Conn
-	buffer := s.Buffer
+	var reader io.Reader = clientRouter.Conn
+	buffer := clientRouter.Buffer
 	m, err := transfer.ReceiveMessage(reader, buffer)
 	if err != nil {
 		return nil, err
@@ -102,14 +105,14 @@ func receiveResponse(
 	return res, nil
 }
 
-func handleResponse(ctx context.Context, connCtx connection.Context, res message.Response) error {
-	buffer := connCtx.Buffer
+func (clientRouter ClientRouter) handleResponse(ctx context.Context, res message.Response) error {
+	buffer := clientRouter.Buffer
 	defer buffer.Reset()
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
 		res := res.(decorated.GetFileResponse)
-		return response.HandelGetFileResponse(ctx, connCtx, res)
+		return response.HandelGetFileResponse(ctx, clientRouter.Context, res)
 	case message.PutFileResponseType:
 		res := res.(message.PutFileResponse)
 		response.HandlePutFileResponse(res)
