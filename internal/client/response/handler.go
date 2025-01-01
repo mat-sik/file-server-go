@@ -35,7 +35,7 @@ func handleGetFileResponse(
 	defer buffer.Reset()
 
 	path := filepath.Join(envs.ClientDBPath, fileName)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}

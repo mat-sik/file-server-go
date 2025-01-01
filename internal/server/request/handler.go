@@ -26,7 +26,7 @@ func HandlePutFileRequest(
 	defer buffer.Reset()
 
 	path := filepath.Join(envs.ServerDBPath, req.FileName)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
+	file, err := os.Create(path)
 	if err != nil {
 		return message.PutFileResponse{}, err
 	}
