@@ -134,11 +134,11 @@ func (b *Buffer) Next(n int) []byte {
 	return data
 }
 
-type BufferedAtLeastNEnsurer interface {
-	EnsureBufferedAtLeastN(reader io.Reader, n int) error
+type MinReader interface {
+	ReadMin(reader io.Reader, n int) error
 }
 
-func (b *Buffer) EnsureBufferedAtLeastN(reader io.Reader, n int) error {
+func (b *Buffer) ReadMin(reader io.Reader, n int) error {
 	if !b.hasSpace(n) {
 		return ErrSmallBuffer
 	}

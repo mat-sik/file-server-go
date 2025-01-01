@@ -20,7 +20,7 @@ type Messenger interface {
 	io.WriterTo
 	io.Writer
 	io.Reader
-	limited.BufferedAtLeastNEnsurer
+	limited.MinReader
 	limited.ByteIterator
 	limited.Resettable
 	limited.ReadableLength
@@ -54,14 +54,14 @@ func sendMessage(messenger Messenger, writer io.Writer, headerBuffer []byte, m m
 }
 
 func receiveMessage(messenger Messenger, reader io.Reader) (message.Message, error) {
-	if err := messenger.EnsureBufferedAtLeastN(reader, header.Size); err != nil {
+	if err := messenger.ReadMin(reader, header.Size); err != nil {
 		return nil, err
 	}
 
 	messageHeader := header.DecodeHeader(messenger)
 
 	toRead := messageHeader.PayloadSize - uint32(messenger.Len())
-	if err := messenger.EnsureBufferedAtLeastN(reader, int(toRead)); err != nil {
+	if err := messenger.ReadMin(reader, int(toRead)); err != nil {
 		return nil, err
 	}
 
