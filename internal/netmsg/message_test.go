@@ -17,7 +17,7 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 
 	readWriteCloser := &mockReadWriteCloser{Buffer: *buffer}
 
-	messageDispatcher := MessageDispatcher{
+	messageDispatcher := Session{
 		Conn:         readWriteCloser,
 		Buffer:       messageBuffer,
 		HeaderBuffer: sizeBuffer,

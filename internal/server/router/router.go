@@ -14,7 +14,7 @@ import (
 )
 
 type ServerRouter struct {
-	netmsg.MessageDispatcher
+	netmsg.Session
 }
 
 func (serverRouter ServerRouter) HandleRequest(ctx context.Context) error {
@@ -56,7 +56,7 @@ func (serverRouter ServerRouter) routeRequest(ctx context.Context, req message.R
 		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
 		req := req.(message.PutFileRequest)
-		return request.HandlePutFileRequest(ctx, serverRouter.MessageDispatcher, req)
+		return request.HandlePutFileRequest(ctx, serverRouter.Session, req)
 	case message.DeleteFileRequestType:
 		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)

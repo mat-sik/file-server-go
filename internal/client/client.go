@@ -14,8 +14,8 @@ func RunClient(ctx context.Context, hostname string) error {
 		return err
 	}
 
-	messageDispatcher := netmsg.NewMessageDispatcher(conn)
-	clientRouter := router.ClientRouter{MessageDispatcher: messageDispatcher}
+	messageDispatcher := netmsg.NewSession(conn)
+	clientRouter := router.ClientRouter{Session: messageDispatcher}
 
 	req := message.GetFileRequest{FileName: "foo.txt"}
 

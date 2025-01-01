@@ -13,7 +13,7 @@ import (
 
 func HandelGetFileResponse(
 	ctx context.Context,
-	dispatcher netmsg.MessageDispatcher,
+	dispatcher netmsg.Session,
 	res decorated.GetFileResponse,
 ) error {
 	if res.Status != 200 {
@@ -24,7 +24,7 @@ func HandelGetFileResponse(
 
 func handleGetFileResponse(
 	ctx context.Context,
-	dispatcher netmsg.MessageDispatcher,
+	dispatcher netmsg.Session,
 	fileName string,
 	fileSize int,
 ) error {

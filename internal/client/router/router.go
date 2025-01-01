@@ -14,7 +14,7 @@ import (
 )
 
 type ClientRouter struct {
-	netmsg.MessageDispatcher
+	netmsg.Session
 }
 
 func (clientRouter ClientRouter) HandleRequest(ctx context.Context, req message.Request) error {
@@ -96,7 +96,7 @@ func (clientRouter ClientRouter) handleResponse(ctx context.Context, res message
 	switch res.GetType() {
 	case message.GetFileResponseType:
 		res := res.(decorated.GetFileResponse)
-		return response.HandelGetFileResponse(ctx, clientRouter.MessageDispatcher, res)
+		return response.HandelGetFileResponse(ctx, clientRouter.Session, res)
 	case message.PutFileResponseType:
 		res := res.(message.PutFileResponse)
 		response.HandlePutFileResponse(res)

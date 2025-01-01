@@ -17,7 +17,7 @@ func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse 
 
 func HandlePutFileRequest(
 	ctx context.Context,
-	dispatcher netmsg.MessageDispatcher,
+	dispatcher netmsg.Session,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
 	defer dispatcher.Buffer.Reset()
