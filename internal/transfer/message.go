@@ -8,6 +8,14 @@ import (
 	"io"
 )
 
+func (d MessageDispatcher) SendMessage(m message.Message) error {
+	return sendMessage(d.Buffer, d.Conn, d.HeaderBuffer, m)
+}
+
+func (d MessageDispatcher) ReceiveMessage() (message.Message, error) {
+	return receiveMessage(d.Buffer, d.Conn)
+}
+
 type Messenger interface {
 	io.WriterTo
 	io.Writer
@@ -18,42 +26,42 @@ type Messenger interface {
 	limited.ReadableLength
 }
 
-func (d MessageDispatcher) SendMessage(m message.Message) error {
-	defer d.Buffer.Reset()
+func sendMessage(messenger Messenger, writer io.Writer, headerBuffer []byte, m message.Message) error {
+	defer messenger.Reset()
 
-	encoder := json.NewEncoder(d.Buffer)
+	encoder := json.NewEncoder(messenger)
 	if err := encoder.Encode(m); err != nil {
 		return err
 	}
 
-	messageSize := uint32(d.Buffer.Len())
+	messageSize := uint32(messenger.Len())
 	messageType := m.GetType()
 	messageHeader := header.Header{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
 	}
-	if err := header.EncodeHeader(messageHeader, d.HeaderBuffer); err != nil {
+	if err := header.EncodeHeader(messageHeader, headerBuffer); err != nil {
 		return err
 	}
 
-	if _, err := d.Conn.Write(d.HeaderBuffer); err != nil {
+	if _, err := writer.Write(headerBuffer); err != nil {
 		return err
 	}
-	if _, err := d.Buffer.WriteTo(d.Conn); err != nil {
+	if _, err := messenger.WriteTo(writer); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d MessageDispatcher) ReceiveMessage() (message.Message, error) {
-	if err := d.Buffer.EnsureBufferedAtLeastN(d.Conn, header.Size); err != nil {
+func receiveMessage(messenger Messenger, reader io.Reader) (message.Message, error) {
+	if err := messenger.EnsureBufferedAtLeastN(reader, header.Size); err != nil {
 		return nil, err
 	}
 
-	messageHeader := header.DecodeHeader(d.Buffer)
+	messageHeader := header.DecodeHeader(messenger)
 
-	toRead := messageHeader.PayloadSize - uint32(d.Buffer.Len())
-	if err := d.Buffer.EnsureBufferedAtLeastN(d.Conn, int(toRead)); err != nil {
+	toRead := messageHeader.PayloadSize - uint32(messenger.Len())
+	if err := messenger.EnsureBufferedAtLeastN(reader, int(toRead)); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +70,7 @@ func (d MessageDispatcher) ReceiveMessage() (message.Message, error) {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(d.Buffer)
+	decoder := json.NewDecoder(messenger)
 	if err = decoder.Decode(m); err != nil {
 		return nil, err
 	}
