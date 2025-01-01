@@ -20,20 +20,20 @@ type Session struct {
 	HeaderBuffer []byte
 }
 
-func (d Session) SendMessage(m message.Message) error {
-	return sendMessage(m, d.HeaderBuffer, d.Buffer, d.Conn)
+func (s Session) SendMessage(m message.Message) error {
+	return sendMessage(m, s.HeaderBuffer, s.Buffer, s.Conn)
 }
 
-func (d Session) ReceiveMessage() (message.Message, error) {
-	return receiveMessage(d.Conn, d.Buffer)
+func (s Session) ReceiveMessage() (message.Message, error) {
+	return receiveMessage(s.Conn, s.Buffer)
 }
 
-func (d Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
-	return stream(ctx, reader, d.Conn, d.Buffer, toTransfer)
+func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
+	return stream(ctx, reader, s.Conn, s.Buffer, toTransfer)
 }
 
-func (d Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
-	return stream(ctx, d.Conn, writer, d.Buffer, toTransfer)
+func (s Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
+	return stream(ctx, s.Conn, writer, s.Buffer, toTransfer)
 }
 
 func NewSession(conn net.Conn) Session {
