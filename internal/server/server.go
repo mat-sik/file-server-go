@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/server/router"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"net"
 )
 
@@ -46,8 +45,7 @@ func acceptConnections(listener net.Listener, connCh chan<- net.Conn, errCh chan
 func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	defer safeConnectionClose(conn)
 
-	connCtx := connection.NewContext(conn)
-	messageDispatcher := transfer.MessageDispatcher{Context: connCtx}
+	messageDispatcher := transfer.NewMessageDispatcher(conn)
 	serverRouter := router.ServerRouter{MessageDispatcher: messageDispatcher}
 
 	if err := serverRouter.HandleRequest(ctx); err != nil {

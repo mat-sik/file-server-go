@@ -56,7 +56,7 @@ func (serverRouter ServerRouter) routeRequest(ctx context.Context, req message.R
 		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
 		req := req.(message.PutFileRequest)
-		return request.HandlePutFileRequest(ctx, serverRouter, serverRouter.Buffer, req)
+		return request.HandlePutFileRequest(ctx, serverRouter.MessageDispatcher, req)
 	case message.DeleteFileRequestType:
 		req := req.(message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
@@ -104,7 +104,7 @@ func (serverRouter ServerRouter) streamFileResponse(
 	if err = serverRouter.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return transfer.Stream(ctx, f, serverRouter, serverRouter.Buffer, res.Size)
+	return serverRouter.StreamToNet(ctx, f, res.Size)
 }
 
 func (serverRouter ServerRouter) sendNotFoundResponse(res decorated.GetFileResponse) error {

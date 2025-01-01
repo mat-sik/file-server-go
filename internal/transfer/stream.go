@@ -6,14 +6,22 @@ import (
 	"io"
 )
 
-type StreamableBuffer interface {
-	limited.SingleWriterTo
-	limited.SingleReaderFrom
-	Len() int
-	Reset()
+func (dispatcher MessageDispatcher) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
+	return stream(ctx, reader, dispatcher.ReadWriteCloser, dispatcher.Buffer, toTransfer)
 }
 
-func Stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer StreamableBuffer, toTransfer int) error {
+func (dispatcher MessageDispatcher) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
+	return stream(ctx, dispatcher.ReadWriteCloser, writer, dispatcher.Buffer, toTransfer)
+}
+
+type Streamer interface {
+	limited.SingleWriterTo
+	limited.SingleReaderFrom
+	limited.Resettable
+	limited.ReadableLength
+}
+
+func stream(ctx context.Context, reader io.Reader, writer io.Writer, buffer Streamer, toTransfer int) error {
 	if toTransfer == 0 {
 		return nil
 	}

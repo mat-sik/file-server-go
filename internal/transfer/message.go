@@ -3,12 +3,19 @@ package transfer
 import (
 	"encoding/json"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"github.com/mat-sik/file-server-go/internal/transfer/header"
+	"github.com/mat-sik/file-server-go/internal/transfer/limited"
+	"io"
 )
 
-type MessageDispatcher struct {
-	connection.Context
+type Messenger interface {
+	io.WriterTo
+	io.Writer
+	io.Reader
+	limited.BufferedAtLeastNEnsurer
+	limited.ByteIterator
+	limited.Resettable
+	limited.ReadableLength
 }
 
 func (dispatcher MessageDispatcher) SendMessage(

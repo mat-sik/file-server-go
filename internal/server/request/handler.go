@@ -6,8 +6,6 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/transfer"
-	"github.com/mat-sik/file-server-go/internal/transfer/limited"
-	"io"
 	"os"
 	"path/filepath"
 )
@@ -19,11 +17,10 @@ func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse 
 
 func HandlePutFileRequest(
 	ctx context.Context,
-	writer io.Writer,
-	buffer *limited.Buffer,
+	dispatcher transfer.MessageDispatcher,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
-	defer buffer.Reset()
+	defer dispatcher.Buffer.Reset()
 
 	path := filepath.Join(envs.ServerDBPath, req.FileName)
 	file, err := os.Create(path)
@@ -31,7 +28,7 @@ func HandlePutFileRequest(
 		return message.PutFileResponse{}, err
 	}
 
-	if err = transfer.Stream(ctx, file, writer, buffer, req.Size); err != nil {
+	if err = dispatcher.StreamFromNet(ctx, file, req.Size); err != nil {
 		return message.PutFileResponse{}, err
 	}
 

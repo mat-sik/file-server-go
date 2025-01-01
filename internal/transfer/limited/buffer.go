@@ -10,6 +10,10 @@ type Buffer struct {
 	offset int
 }
 
+type Resettable interface {
+	Reset()
+}
+
 func (b *Buffer) Reset() {
 	b.buffer = b.buffer[:0]
 	b.offset = 0
@@ -19,16 +23,20 @@ func (b *Buffer) empty() bool {
 	return len(b.buffer) == b.offset
 }
 
+type ReadableLength interface {
+	Len() int
+}
+
 // Len returns amount of ready to be read unread bytes.
 func (b *Buffer) Len() int {
 	return len(b.buffer) - b.offset
 }
 
-func (b *Buffer) Cap() int {
+func (b *Buffer) cap() int {
 	return cap(b.buffer)
 }
 
-func (b *Buffer) Available() int {
+func (b *Buffer) available() int {
 	return cap(b.buffer) - len(b.buffer)
 }
 
@@ -42,7 +50,7 @@ func (b *Buffer) Write(p []byte) (int, error) {
 // staticGrow tries to make space for n, if it can't, it tires to make as much space as possible.
 func (b *Buffer) staticGrow(n int) int {
 	oldLen := len(b.buffer)
-	newLen := min(b.Cap(), oldLen+n)
+	newLen := min(b.cap(), oldLen+n)
 	b.buffer = b.buffer[:newLen]
 	return oldLen
 }
@@ -126,6 +134,10 @@ func (b *Buffer) Next(n int) []byte {
 	return data
 }
 
+type BufferedAtLeastNEnsurer interface {
+	EnsureBufferedAtLeastN(reader io.Reader, n int) error
+}
+
 func (b *Buffer) EnsureBufferedAtLeastN(reader io.Reader, n int) error {
 	if !b.hasSpace(n) {
 		return ErrSmallBuffer
@@ -141,10 +153,10 @@ func (b *Buffer) EnsureBufferedAtLeastN(reader io.Reader, n int) error {
 var ErrSmallBuffer = errors.New("buffer is too small")
 
 func (b *Buffer) hasSpace(n int) bool {
-	if b.Len()+n > b.Cap() {
+	if b.Len()+n > b.cap() {
 		return false
 	}
-	if b.Available() < n {
+	if b.available() < n {
 		b.compact()
 	}
 	return true

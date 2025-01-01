@@ -24,11 +24,11 @@ func EncodeHeader(header Header, headerBuffer []byte) error {
 	return nil
 }
 
-func DecodeHeader(buffer *limited.Buffer) Header {
-	uint32ByteSlice := buffer.Next(uint32ByteSize)
+func DecodeHeader(byteIterator limited.ByteIterator) Header {
+	uint32ByteSlice := byteIterator.Next(uint32ByteSize)
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 
-	uint64ByteSlice := buffer.Next(uint64ByteSize)
+	uint64ByteSlice := byteIterator.Next(uint64ByteSize)
 	payloadType := message.TypeName(binary.BigEndian.Uint64(uint64ByteSlice))
 
 	return Header{

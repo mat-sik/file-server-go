@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/connection"
 	"github.com/mat-sik/file-server-go/internal/transfer/limited"
 	"testing"
 )
@@ -18,13 +17,11 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 
 	readWriteCloser := &mockReadWriteCloser{Buffer: *buffer}
 
-	connCtx := connection.Context{
+	messageDispatcher := MessageDispatcher{
 		ReadWriteCloser: readWriteCloser,
 		Buffer:          messageBuffer,
 		HeaderBuffer:    sizeBuffer,
 	}
-
-	messageDispatcher := MessageDispatcher{Context: connCtx}
 
 	err := messageDispatcher.SendMessage(in)
 	if err != nil {

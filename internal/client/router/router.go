@@ -66,7 +66,7 @@ func (clientRouter ClientRouter) streamRequest(ctx context.Context, req *message
 	if err = clientRouter.SendMessage(req); err != nil {
 		return err
 	}
-	return transfer.Stream(ctx, f, clientRouter, clientRouter.Buffer, fileSize)
+	return clientRouter.StreamToNet(ctx, f, fileSize)
 }
 
 func (clientRouter ClientRouter) receiveResponse(
@@ -96,7 +96,7 @@ func (clientRouter ClientRouter) handleResponse(ctx context.Context, res message
 	switch res.GetType() {
 	case message.GetFileResponseType:
 		res := res.(decorated.GetFileResponse)
-		return response.HandelGetFileResponse(ctx, clientRouter, clientRouter.Buffer, res)
+		return response.HandelGetFileResponse(ctx, clientRouter.MessageDispatcher, res)
 	case message.PutFileResponseType:
 		res := res.(message.PutFileResponse)
 		response.HandlePutFileResponse(res)

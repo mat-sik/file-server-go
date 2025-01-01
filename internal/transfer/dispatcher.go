@@ -1,4 +1,4 @@
-package connection
+package transfer
 
 import (
 	"github.com/mat-sik/file-server-go/internal/transfer/header"
@@ -7,16 +7,21 @@ import (
 	"net"
 )
 
-type Context struct {
+type MessageDispatcher struct {
 	io.ReadWriteCloser
-	Buffer       *limited.Buffer
+	Buffer       Buffer
 	HeaderBuffer []byte
 }
 
-func NewContext(conn net.Conn) Context {
+type Buffer interface {
+	Streamer
+	Messenger
+}
+
+func NewMessageDispatcher(conn net.Conn) MessageDispatcher {
 	buffer := limited.NewBuffer(make([]byte, 0, bufferSize))
 	headerBuffer := make([]byte, header.Size)
-	return Context{
+	return MessageDispatcher{
 		ReadWriteCloser: conn,
 		Buffer:          buffer,
 		HeaderBuffer:    headerBuffer,

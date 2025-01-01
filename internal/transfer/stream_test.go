@@ -16,11 +16,11 @@ func Test_Stream(t *testing.T) {
 	tests := []struct {
 		name          string
 		ctx           context.Context
-		buffer        StreamableBuffer
+		buffer        Streamer
 		reader        io.Reader
 		writer        *bytes.Buffer
-		mockFunc      func(StreamableBuffer, context.Context, io.Reader, io.Writer)
-		assertFunc    func(StreamableBuffer, context.Context, io.Reader, io.Writer)
+		mockFunc      func(Streamer, context.Context, io.Reader, io.Writer)
+		assertFunc    func(Streamer, context.Context, io.Reader, io.Writer)
 		toTransfer    int
 		wantedData    string
 		expectedError error
@@ -31,7 +31,7 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbbcccc"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+			mockFunc: func(b Streamer, _ context.Context, r io.Reader, w io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 
 				len0 := m.On("Len").Return(0).Once()
@@ -44,7 +44,7 @@ func Test_Stream(t *testing.T) {
 				len2 := m.On("Len").Return(4).Once().NotBefore(read1)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("bbbb")).Once().NotBefore(len2)
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -57,7 +57,7 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+			mockFunc: func(b Streamer, _ context.Context, r io.Reader, w io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 
 				len0 := m.On("Len").Return(0).Once()
@@ -66,7 +66,7 @@ func Test_Stream(t *testing.T) {
 				len1 := m.On("Len").Return(4).Once().NotBefore(read0)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("aaaa")).Once().NotBefore(len1)
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -79,7 +79,7 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("bbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, w io.Writer) {
+			mockFunc: func(b Streamer, _ context.Context, r io.Reader, w io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 
 				len0 := m.On("Len").Return(4).Once()
@@ -89,7 +89,7 @@ func Test_Stream(t *testing.T) {
 				len1 := m.On("Len").Return(4).Once().NotBefore(read0)
 				m.On("SingleWriteTo", w, 4).Return(4, nil, []byte("bbbb")).Once().NotBefore(len1)
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -102,9 +102,9 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			mockFunc: func(_ Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -117,7 +117,7 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(_ StreamableBuffer, c context.Context, _ io.Reader, _ io.Writer) {
+			mockFunc: func(_ Streamer, c context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := c.(*MockContext)
 
 				doneCh := make(chan struct{}, 1)
@@ -126,7 +126,7 @@ func Test_Stream(t *testing.T) {
 				done0 := m.On("Done").Return(doneCh).Once()
 				m.On("Err").Return(context.Canceled).Once().NotBefore(done0)
 			},
-			assertFunc: func(buffer StreamableBuffer, ctx context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(buffer Streamer, ctx context.Context, _ io.Reader, _ io.Writer) {
 				mockBuffer, _ := buffer.(*MockStreamableBuffer)
 				mockCtx, _ := ctx.(*MockContext)
 
@@ -143,14 +143,14 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, r io.Reader, _ io.Writer) {
+			mockFunc: func(b Streamer, _ context.Context, r io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 
 				len0 := m.On("Len").Return(0).Once()
 				reset0 := m.On("Reset").Return().Once().NotBefore(len0)
 				m.On("SingleReadFrom", r).Return(-1, io.EOF).Once().NotBefore(reset0)
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -163,13 +163,13 @@ func Test_Stream(t *testing.T) {
 			buffer: &MockStreamableBuffer{},
 			reader: strings.NewReader("aaaabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, w io.Writer) {
+			mockFunc: func(b Streamer, _ context.Context, _ io.Reader, w io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 
 				len0 := m.On("Len").Return(1).Once()
 				m.On("SingleWriteTo", w, 1).Return(-1, io.EOF, make([]byte, 0)).Once().NotBefore(len0)
 			},
-			assertFunc: func(b StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(b Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 				m, _ := b.(*MockStreamableBuffer)
 				m.AssertExpectations(t)
 			},
@@ -182,9 +182,9 @@ func Test_Stream(t *testing.T) {
 			buffer: limited.NewBuffer([]byte("aa")),
 			reader: strings.NewReader("aabbbb"),
 			writer: bytes.NewBuffer(make([]byte, 0, bytesBufferCap)),
-			mockFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			mockFunc: func(_ Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 			},
-			assertFunc: func(_ StreamableBuffer, _ context.Context, _ io.Reader, _ io.Writer) {
+			assertFunc: func(_ Streamer, _ context.Context, _ io.Reader, _ io.Writer) {
 			},
 			toTransfer: 8,
 			wantedData: "aaaabbbb",
@@ -199,7 +199,7 @@ func Test_Stream(t *testing.T) {
 			tt.mockFunc(tt.buffer, tt.ctx, tt.reader, tt.writer)
 
 			// when
-			err := Stream(tt.ctx, tt.reader, tt.writer, tt.buffer, tt.toTransfer)
+			err := stream(tt.ctx, tt.reader, tt.writer, tt.buffer, tt.toTransfer)
 			// then
 			if tt.expectedError != nil {
 				assert.Equal(t, tt.expectedError, err)
