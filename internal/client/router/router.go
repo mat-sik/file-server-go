@@ -8,13 +8,13 @@ import (
 	"github.com/mat-sik/file-server-go/internal/file"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
-	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
 	"time"
 )
 
 type ClientRouter struct {
-	transfer.MessageDispatcher
+	netmsg.MessageDispatcher
 }
 
 func (clientRouter ClientRouter) HandleRequest(ctx context.Context, req message.Request) error {

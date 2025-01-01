@@ -1,10 +1,10 @@
-package transfer
+package netmsg
 
 import (
 	"encoding/json"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/header"
-	"github.com/mat-sik/file-server-go/internal/transfer/limited"
+	"github.com/mat-sik/file-server-go/internal/netmsg/header"
+	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
 	"io"
 )
 

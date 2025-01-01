@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/client/router"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"net"
 )
 
@@ -14,7 +14,7 @@ func RunClient(ctx context.Context, hostname string) error {
 		return err
 	}
 
-	messageDispatcher := transfer.NewMessageDispatcher(conn)
+	messageDispatcher := netmsg.NewMessageDispatcher(conn)
 	clientRouter := router.ClientRouter{MessageDispatcher: messageDispatcher}
 
 	req := message.GetFileRequest{FileName: "foo.txt"}

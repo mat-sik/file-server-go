@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/transfer/limited"
+	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
 )
 
 type Header struct {

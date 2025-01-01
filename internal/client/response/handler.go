@@ -6,14 +6,14 @@ import (
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
-	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
 	"path/filepath"
 )
 
 func HandelGetFileResponse(
 	ctx context.Context,
-	dispatcher transfer.MessageDispatcher,
+	dispatcher netmsg.MessageDispatcher,
 	res decorated.GetFileResponse,
 ) error {
 	if res.Status != 200 {
@@ -24,7 +24,7 @@ func HandelGetFileResponse(
 
 func handleGetFileResponse(
 	ctx context.Context,
-	dispatcher transfer.MessageDispatcher,
+	dispatcher netmsg.MessageDispatcher,
 	fileName string,
 	fileSize int,
 ) error {

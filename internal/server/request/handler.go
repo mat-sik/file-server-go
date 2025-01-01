@@ -5,7 +5,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
-	"github.com/mat-sik/file-server-go/internal/transfer"
+	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
 	"path/filepath"
 )
@@ -17,7 +17,7 @@ func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse 
 
 func HandlePutFileRequest(
 	ctx context.Context,
-	dispatcher transfer.MessageDispatcher,
+	dispatcher netmsg.MessageDispatcher,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
 	defer dispatcher.Buffer.Reset()

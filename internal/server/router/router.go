@@ -6,15 +6,15 @@ import (
 	"github.com/mat-sik/file-server-go/internal/file"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
+	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"github.com/mat-sik/file-server-go/internal/server/request"
-	"github.com/mat-sik/file-server-go/internal/transfer"
 	"net/http"
 	"os"
 	"time"
 )
 
 type ServerRouter struct {
-	transfer.MessageDispatcher
+	netmsg.MessageDispatcher
 }
 
 func (serverRouter ServerRouter) HandleRequest(ctx context.Context) error {

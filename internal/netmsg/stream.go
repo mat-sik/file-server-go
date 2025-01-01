@@ -1,8 +1,8 @@
-package transfer
+package netmsg
 
 import (
 	"context"
-	"github.com/mat-sik/file-server-go/internal/transfer/limited"
+	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
 	"io"
 )
 
