@@ -17,10 +17,10 @@ func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse 
 
 func HandlePutFileRequest(
 	ctx context.Context,
-	dispatcher netmsg.Session,
+	session netmsg.Session,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
-	defer dispatcher.Buffer.Reset()
+	defer session.Buffer.Reset()
 
 	path := filepath.Join(envs.ServerDBPath, req.FileName)
 	file, err := os.Create(path)
@@ -28,7 +28,7 @@ func HandlePutFileRequest(
 		return message.PutFileResponse{}, err
 	}
 
-	if err = dispatcher.StreamFromNet(ctx, file, req.Size); err != nil {
+	if err = session.StreamFromNet(ctx, file, req.Size); err != nil {
 		return message.PutFileResponse{}, err
 	}
 
