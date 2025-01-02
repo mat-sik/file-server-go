@@ -63,6 +63,10 @@ type GetFileResponse struct {
 	Size   int
 }
 
+func NewGetFileResponse(status int, size int) *GetFileResponse {
+	return &GetFileResponse{Status: status, Size: size}
+}
+
 func (res GetFileResponse) GetType() TypeName {
 	return GetFileResponseType
 }
@@ -82,6 +86,10 @@ type PutFileResponse struct {
 	Status int
 }
 
+func NewPutFileResponse(status int) *PutFileResponse {
+	return &PutFileResponse{Status: status}
+}
+
 func (res PutFileResponse) GetType() TypeName {
 	return PutFileResponseType
 }
@@ -98,6 +106,10 @@ func (req DeleteFileRequest) GetType() TypeName {
 type DeleteFileResponse struct {
 	Response
 	Status int
+}
+
+func NewDeleteFileResponse(status int) *DeleteFileResponse {
+	return &DeleteFileResponse{Status: status}
 }
 
 func (res DeleteFileResponse) GetType() TypeName {

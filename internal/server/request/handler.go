@@ -14,7 +14,7 @@ func HandleGetFileRequest(req *message.GetFileRequest) (*GetFileResponse, error)
 	path := files.GetServerDBPath(req.FileName)
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return &GetFileResponse{GetFileResponse: &message.GetFileResponse{Status: http.StatusNotFound}}, nil
+		return &GetFileResponse{GetFileResponse: message.NewGetFileResponse(http.StatusNotFound, 0)}, nil
 	} else if err != nil {
 		return nil, err
 	}
@@ -25,11 +25,8 @@ func HandleGetFileRequest(req *message.GetFileRequest) (*GetFileResponse, error)
 	}
 
 	return &GetFileResponse{
-		GetFileResponse: &message.GetFileResponse{
-			Status: http.StatusOK,
-			Size:   fileSize,
-		},
-		File: file,
+		GetFileResponse: message.NewGetFileResponse(http.StatusOK, fileSize),
+		File:            file,
 	}, nil
 }
 
@@ -55,13 +52,16 @@ func HandlePutFileRequest(
 		return nil, err
 	}
 
-	return &message.PutFileResponse{Status: 200}, nil
+	return message.NewPutFileResponse(http.StatusCreated), nil
 }
 
 func HandleDeleteFileRequest(req *message.DeleteFileRequest) (*message.DeleteFileResponse, error) {
 	err := os.Remove(req.FileName)
+	if errors.Is(err, os.ErrNotExist) {
+		return message.NewDeleteFileResponse(http.StatusNotFound), nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &message.DeleteFileResponse{Status: 200}, nil
+	return message.NewDeleteFileResponse(http.StatusOK), nil
 }
