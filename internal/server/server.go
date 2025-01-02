@@ -2,13 +2,11 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"net"
 )
 
-func RunServer(ctx context.Context, port int) error {
-	addr := fmt.Sprintf(":%d", port)
+func RunServer(ctx context.Context, addr string) error {
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return err
