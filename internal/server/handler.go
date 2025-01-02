@@ -43,8 +43,6 @@ func (sh SessionHandler) receiveRequest() (message.Request, error) {
 }
 
 func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) (message.Response, error) {
-	defer sh.Buffer.Reset()
-
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 

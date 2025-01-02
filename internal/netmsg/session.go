@@ -21,6 +21,7 @@ type Session struct {
 }
 
 func (s Session) SendMessage(msg message.Message) error {
+	defer s.Buffer.Reset()
 	return sendMessage(msg, s.HeaderBuffer, s.Buffer, s.Conn)
 }
 
@@ -29,6 +30,7 @@ func (s Session) ReceiveMessage() (message.Message, error) {
 }
 
 func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
+	defer s.Buffer.Reset()
 	return stream(ctx, reader, s.Conn, s.Buffer, toTransfer)
 }
 

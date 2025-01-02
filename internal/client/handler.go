@@ -52,8 +52,6 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 }
 
 func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
-	defer sh.Buffer.Reset()
-
 	path := files.GetClientDBPath(req.FileName)
 	file, err := os.Open(path)
 	if err != nil {
@@ -92,8 +90,6 @@ func (sh SessionHandler) receiveResponse(
 }
 
 func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
-	defer sh.Buffer.Reset()
-
 	switch res.GetType() {
 	case message.GetFileResponseType:
 		res := res.(*decorated.GetFileResponse)

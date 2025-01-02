@@ -19,8 +19,6 @@ type messageBuffer interface {
 }
 
 func sendMessage(msg message.Message, headerBuffer []byte, buffer messageBuffer, writer io.Writer) error {
-	defer buffer.Reset()
-
 	encoder := json.NewEncoder(buffer)
 	if err := encoder.Encode(msg); err != nil {
 		return err
