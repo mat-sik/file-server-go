@@ -20,8 +20,8 @@ type Session struct {
 	HeaderBuffer []byte
 }
 
-func (s Session) SendMessage(m message.Message) error {
-	return sendMessage(m, s.HeaderBuffer, s.Buffer, s.Conn)
+func (s Session) SendMessage(msg message.Message) error {
+	return sendMessage(msg, s.HeaderBuffer, s.Buffer, s.Conn)
 }
 
 func (s Session) ReceiveMessage() (message.Message, error) {

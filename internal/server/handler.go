@@ -32,12 +32,12 @@ func (sh SessionHandler) HandleRequest(ctx context.Context) error {
 }
 
 func (sh SessionHandler) receiveRequest() (message.Request, error) {
-	mess, err := sh.ReceiveMessage()
+	msg, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	req, ok := mess.(message.Request)
+	req, ok := msg.(message.Request)
 	if !ok {
 		return nil, errors.New("expected request, received different type")
 	}

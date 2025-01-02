@@ -18,16 +18,16 @@ type messageBuffer interface {
 	limited.ReadableLength
 }
 
-func sendMessage(mess message.Message, headerBuffer []byte, buffer messageBuffer, writer io.Writer) error {
+func sendMessage(msg message.Message, headerBuffer []byte, buffer messageBuffer, writer io.Writer) error {
 	defer buffer.Reset()
 
 	encoder := json.NewEncoder(buffer)
-	if err := encoder.Encode(mess); err != nil {
+	if err := encoder.Encode(msg); err != nil {
 		return err
 	}
 
 	messageSize := uint32(buffer.Len())
-	messageType := mess.GetType()
+	messageType := msg.GetType()
 	messageHeader := header.Header{
 		PayloadSize: messageSize,
 		PayloadType: messageType,
@@ -57,15 +57,15 @@ func receiveMessage(reader io.Reader, buffer messageBuffer) (message.Message, er
 		return nil, err
 	}
 
-	mess, err := message.TypeNameConverter(messageHeader.PayloadType)
+	msg, err := message.TypeNameConverter(messageHeader.PayloadType)
 	if err != nil {
 		return nil, err
 	}
 
 	decoder := json.NewDecoder(buffer)
-	if err = decoder.Decode(mess); err != nil {
+	if err = decoder.Decode(msg); err != nil {
 		return nil, err
 	}
 
-	return mess, nil
+	return msg, nil
 }
