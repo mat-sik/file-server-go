@@ -5,11 +5,9 @@ import (
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"github.com/mat-sik/file-server-go/internal/server/request"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -53,7 +51,7 @@ func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) 
 	switch req.GetType() {
 	case message.GetFileRequestType:
 		req := *req.(*message.GetFileRequest)
-		return request.HandleGetFileRequest(req), nil
+		return request.HandleGetFileRequest(req)
 	case message.PutFileRequestType:
 		req := *req.(*message.PutFileRequest)
 		return request.HandlePutFileRequest(ctx, sh.Session, req)
@@ -71,49 +69,26 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := *res.(*decorated.GetFileResponse)
-		return sh.sendGetFileResponse(ctx, res)
+		res := *res.(*request.GetFileResponse)
+		return sh.streamFileResponse(ctx, res)
 	default:
 		return sh.SendMessage(res)
 	}
 }
 
-func (sh SessionHandler) sendGetFileResponse(ctx context.Context, res decorated.GetFileResponse) error {
-	path := files.GetServerDBPath(res.FileName)
-	file, err := os.Open(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return sh.sendNotFoundResponse(res)
-	} else if err != nil {
-		return err
-	}
-	defer files.Close(file)
-
-	return sh.streamFileResponse(ctx, file, res)
-}
-
 func (sh SessionHandler) streamFileResponse(
 	ctx context.Context,
-	file *os.File,
-	res decorated.GetFileResponse,
+	res request.GetFileResponse,
 ) error {
-	fileSize, err := files.GetSize(file)
-	if err != nil {
+	if res.Status != http.StatusOK {
+		return sh.SendMessage(res)
+	}
+
+	defer files.Close(res.File)
+	if err := sh.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	res.GetFileResponse.Status = http.StatusOK
-	res.Size = fileSize
-
-	if err = sh.SendMessage(res.GetFileResponse); err != nil {
-		return err
-	}
-	return sh.StreamToNet(ctx, file, res.Size)
-}
-
-func (sh SessionHandler) sendNotFoundResponse(res decorated.GetFileResponse) error {
-	res.GetFileResponse.Status = http.StatusNotFound
-	res.Size = 0
-
-	return sh.SendMessage(res)
+	return sh.StreamToNet(ctx, res.File, res.Size)
 }
 
 const timeForRequest = 5 * time.Second

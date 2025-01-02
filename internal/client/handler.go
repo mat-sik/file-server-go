@@ -22,7 +22,7 @@ func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	decorateRes := func(res message.GetFileResponse) *decorated.GetFileResponse {
+	decorateRes := func(res *message.GetFileResponse) *decorated.GetFileResponse {
 		req, ok := req.(*message.GetFileRequest)
 		if !ok {
 			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
@@ -71,7 +71,7 @@ func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileR
 }
 
 func (sh SessionHandler) receiveResponse(
-	decorateRes func(fileResponse message.GetFileResponse) *decorated.GetFileResponse,
+	decorateRes func(fileResponse *message.GetFileResponse) *decorated.GetFileResponse,
 ) (message.Response, error) {
 	msg, err := sh.ReceiveMessage()
 	if err != nil {
@@ -84,7 +84,7 @@ func (sh SessionHandler) receiveResponse(
 	}
 
 	if res.GetType() == message.GetFileResponseType {
-		getFileResponse := *res.(*message.GetFileResponse)
+		getFileResponse := res.(*message.GetFileResponse)
 		res = decorateRes(getFileResponse)
 	}
 

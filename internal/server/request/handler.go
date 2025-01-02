@@ -2,16 +2,40 @@ package request
 
 import (
 	"context"
+	"errors"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
+	"net/http"
 	"os"
 )
 
-func HandleGetFileRequest(req message.GetFileRequest) *decorated.GetFileResponse {
-	res := message.GetFileResponse{}
-	return &decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
+func HandleGetFileRequest(req message.GetFileRequest) (*GetFileResponse, error) {
+	path := files.GetServerDBPath(req.FileName)
+	file, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return &GetFileResponse{GetFileResponse: &message.GetFileResponse{Status: http.StatusNotFound}}, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	fileSize, err := files.GetSize(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetFileResponse{
+		GetFileResponse: &message.GetFileResponse{
+			Status: http.StatusOK,
+			Size:   fileSize,
+		},
+		File: file,
+	}, nil
+}
+
+type GetFileResponse struct {
+	*message.GetFileResponse
+	*os.File
 }
 
 func HandlePutFileRequest(

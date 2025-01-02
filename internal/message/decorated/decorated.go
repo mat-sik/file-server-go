@@ -5,6 +5,6 @@ import (
 )
 
 type GetFileResponse struct {
-	message.GetFileResponse
+	*message.GetFileResponse
 	FileName string
 }
