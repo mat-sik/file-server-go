@@ -42,9 +42,8 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch req.Type() {
-	case message.PutFileRequestType:
-		req := req.(*message.PutFileRequest)
+	switch req := req.(type) {
+	case *message.PutFileRequest:
 		return sh.streamRequest(ctx, req)
 	default:
 		return sh.SendMessage(req)
@@ -90,15 +89,12 @@ func (sh SessionHandler) receiveResponse(
 }
 
 func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
-	switch res.Type() {
-	case message.GetFileResponseType:
-		res := res.(*decorated.GetFileResponse)
+	switch res := res.(type) {
+	case *decorated.GetFileResponse:
 		return response.HandelGetFileResponse(ctx, sh.Session, res)
-	case message.PutFileResponseType:
-		res := res.(*message.PutFileResponse)
+	case *message.PutFileResponse:
 		response.HandlePutFileResponse(res)
-	case message.DeleteFileResponseType:
-		res := res.(*message.DeleteFileResponse)
+	case *message.DeleteFileResponse:
 		response.HandleDeleteFileResponse(res)
 	default:
 		return errors.New("unexpected response type")
