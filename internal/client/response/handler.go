@@ -19,7 +19,12 @@ func HandelGetFileResponse(
 	if res.Status != 200 {
 		fmt.Printf("getFileResponse status: %d\n", res.Status)
 	}
-	return handleGetFileResponse(ctx, session, res.FileName, res.Size)
+	if err := handleGetFileResponse(ctx, session, res.FileName, res.Size); err != nil {
+		return err
+	}
+
+	fmt.Printf("handle get file response %d\n", res.Status)
+	return nil
 }
 
 func handleGetFileResponse(

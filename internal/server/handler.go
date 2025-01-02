@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
@@ -10,6 +11,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/server/request"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -52,13 +54,13 @@ func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) 
 
 	switch req.GetType() {
 	case message.GetFileRequestType:
-		req := req.(message.GetFileRequest)
+		req := *req.(*message.GetFileRequest)
 		return request.HandleGetFileRequest(req), nil
 	case message.PutFileRequestType:
-		req := req.(message.PutFileRequest)
+		req := *req.(*message.PutFileRequest)
 		return request.HandlePutFileRequest(ctx, sh.Session, req)
 	case message.DeleteFileRequestType:
-		req := req.(message.DeleteFileRequest)
+		req := *req.(*message.DeleteFileRequest)
 		return request.HandleDeleteFileRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
@@ -71,7 +73,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := res.(decorated.GetFileResponse)
+		res := *res.(*decorated.GetFileResponse)
 		return sh.sendGetFileResponse(ctx, res)
 	default:
 		return sh.SendMessage(res)
@@ -79,7 +81,8 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 }
 
 func (sh SessionHandler) sendGetFileResponse(ctx context.Context, res decorated.GetFileResponse) error {
-	file, err := os.Open(res.FileName)
+	path := filepath.Join(envs.ServerDBPath, res.FileName)
+	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return sh.sendNotFoundResponse(res)
 	} else if err != nil {
@@ -99,6 +102,7 @@ func (sh SessionHandler) streamFileResponse(
 	if err != nil {
 		return err
 	}
+	res.GetFileResponse.Status = http.StatusOK
 	res.Size = fileSize
 
 	if err = sh.SendMessage(res.GetFileResponse); err != nil {

@@ -10,35 +10,35 @@ import (
 	"path/filepath"
 )
 
-func HandleGetFileRequest(req message.GetFileRequest) decorated.GetFileResponse {
+func HandleGetFileRequest(req message.GetFileRequest) *decorated.GetFileResponse {
 	res := message.GetFileResponse{}
-	return decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
+	return &decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
 }
 
 func HandlePutFileRequest(
 	ctx context.Context,
 	session netmsg.Session,
 	req message.PutFileRequest,
-) (message.PutFileResponse, error) {
+) (*message.PutFileResponse, error) {
 	defer session.Buffer.Reset()
 
 	path := filepath.Join(envs.ServerDBPath, req.FileName)
 	file, err := os.Create(path)
 	if err != nil {
-		return message.PutFileResponse{}, err
+		return nil, err
 	}
 
 	if err = session.StreamFromNet(ctx, file, req.Size); err != nil {
-		return message.PutFileResponse{}, err
+		return nil, err
 	}
 
-	return message.PutFileResponse{Status: 200}, nil
+	return &message.PutFileResponse{Status: 200}, nil
 }
 
-func HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
+func HandleDeleteFileRequest(req message.DeleteFileRequest) (*message.DeleteFileResponse, error) {
 	err := os.Remove(req.FileName)
 	if err != nil {
-		return message.DeleteFileResponse{}, err
+		return nil, err
 	}
-	return message.DeleteFileResponse{Status: 200}, nil
+	return &message.DeleteFileResponse{Status: 200}, nil
 }

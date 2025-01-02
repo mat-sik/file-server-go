@@ -8,7 +8,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	req := message.PutFileRequest{FileName: "foo.txt", Size: 4}
+	req := &message.GetFileRequest{FileName: "foo.txt"}
 	if err := client.RunClient(ctx, ":44696", req); err != nil {
 		panic(err)
 	}

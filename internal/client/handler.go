@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/response"
+	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -22,12 +24,12 @@ func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	decorateRes := func(res message.GetFileResponse) decorated.GetFileResponse {
+	decorateRes := func(res message.GetFileResponse) *decorated.GetFileResponse {
 		req, ok := req.(*message.GetFileRequest)
 		if !ok {
 			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
 		}
-		return decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
+		return &decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
 	}
 
 	res, err := sh.receiveResponse(decorateRes)
@@ -44,17 +46,18 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
-		req := req.(*message.PutFileRequest)
+		req := *req.(*message.PutFileRequest)
 		return sh.streamRequest(ctx, req)
 	default:
 		return sh.SendMessage(req)
 	}
 }
 
-func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
+func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
 	defer sh.Buffer.Reset()
 
-	file, err := os.Open(req.FileName)
+	path := filepath.Join(envs.ClientDBPath, req.FileName)
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
@@ -70,7 +73,7 @@ func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFile
 }
 
 func (sh SessionHandler) receiveResponse(
-	decorateRes func(fileResponse message.GetFileResponse) decorated.GetFileResponse,
+	decorateRes func(fileResponse message.GetFileResponse) *decorated.GetFileResponse,
 ) (message.Response, error) {
 	mess, err := sh.ReceiveMessage()
 	if err != nil {
@@ -83,7 +86,7 @@ func (sh SessionHandler) receiveResponse(
 	}
 
 	if res.GetType() == message.GetFileResponseType {
-		getFileResponse := res.(message.GetFileResponse)
+		getFileResponse := *res.(*message.GetFileResponse)
 		res = decorateRes(getFileResponse)
 	}
 
@@ -95,13 +98,13 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := res.(decorated.GetFileResponse)
+		res := *res.(*decorated.GetFileResponse)
 		return response.HandelGetFileResponse(ctx, sh.Session, res)
 	case message.PutFileResponseType:
-		res := res.(message.PutFileResponse)
+		res := *res.(*message.PutFileResponse)
 		response.HandlePutFileResponse(res)
 	case message.DeleteFileResponseType:
-		res := res.(message.DeleteFileResponse)
+		res := *res.(*message.DeleteFileResponse)
 		response.HandleDeleteFileResponse(res)
 	default:
 		return errors.New("unexpected response type")
