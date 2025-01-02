@@ -2,12 +2,11 @@ package request
 
 import (
 	"context"
-	"github.com/mat-sik/file-server-go/internal/envs"
+	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
-	"path/filepath"
 )
 
 func HandleGetFileRequest(req message.GetFileRequest) *decorated.GetFileResponse {
@@ -22,7 +21,7 @@ func HandlePutFileRequest(
 ) (*message.PutFileResponse, error) {
 	defer session.Buffer.Reset()
 
-	path := filepath.Join(envs.ServerDBPath, req.FileName)
+	path := files.GetServerDBPath(req.FileName)
 	file, err := os.Create(path)
 	if err != nil {
 		return nil, err

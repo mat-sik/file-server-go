@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/response"
-	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -56,7 +54,7 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
 	defer sh.Buffer.Reset()
 
-	path := filepath.Join(envs.ClientDBPath, req.FileName)
+	path := files.GetClientDBPath(req.FileName)
 	file, err := os.Open(path)
 	if err != nil {
 		return err

@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
@@ -11,7 +10,6 @@ import (
 	"github.com/mat-sik/file-server-go/internal/server/request"
 	"net/http"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -81,7 +79,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 }
 
 func (sh SessionHandler) sendGetFileResponse(ctx context.Context, res decorated.GetFileResponse) error {
-	path := filepath.Join(envs.ServerDBPath, res.FileName)
+	path := files.GetServerDBPath(res.FileName)
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return sh.sendNotFoundResponse(res)

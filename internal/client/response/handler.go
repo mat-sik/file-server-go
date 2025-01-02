@@ -3,12 +3,11 @@ package response
 import (
 	"context"
 	"fmt"
-	"github.com/mat-sik/file-server-go/internal/envs"
+	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
-	"path/filepath"
 )
 
 func HandelGetFileResponse(
@@ -35,7 +34,7 @@ func handleGetFileResponse(
 ) error {
 	defer session.Buffer.Reset()
 
-	path := filepath.Join(envs.ClientDBPath, fileName)
+	path := files.GetClientDBPath(fileName)
 	file, err := os.Create(path)
 	if err != nil {
 		return err
