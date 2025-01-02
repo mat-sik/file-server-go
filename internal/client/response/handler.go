@@ -13,7 +13,7 @@ import (
 func HandelGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
-	res decorated.GetFileResponse,
+	res *decorated.GetFileResponse,
 ) error {
 	if res.Status != 200 {
 		fmt.Printf("getFileResponse status: %d\n", res.Status)
@@ -42,10 +42,10 @@ func handleGetFileResponse(
 	return session.StreamFromNet(ctx, file, fileSize)
 }
 
-func HandlePutFileResponse(res message.PutFileResponse) {
+func HandlePutFileResponse(res *message.PutFileResponse) {
 	fmt.Printf("handle put file response %d\n", res.Status)
 }
 
-func HandleDeleteFileResponse(res message.DeleteFileResponse) {
+func HandleDeleteFileResponse(res *message.DeleteFileResponse) {
 	fmt.Printf("handle delete file response %d\n", res.Status)
 }

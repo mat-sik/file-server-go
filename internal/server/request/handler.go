@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func HandleGetFileRequest(req message.GetFileRequest) (*GetFileResponse, error) {
+func HandleGetFileRequest(req *message.GetFileRequest) (*GetFileResponse, error) {
 	path := files.GetServerDBPath(req.FileName)
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -41,7 +41,7 @@ type GetFileResponse struct {
 func HandlePutFileRequest(
 	ctx context.Context,
 	session netmsg.Session,
-	req message.PutFileRequest,
+	req *message.PutFileRequest,
 ) (*message.PutFileResponse, error) {
 	defer session.Buffer.Reset()
 
@@ -58,7 +58,7 @@ func HandlePutFileRequest(
 	return &message.PutFileResponse{Status: 200}, nil
 }
 
-func HandleDeleteFileRequest(req message.DeleteFileRequest) (*message.DeleteFileResponse, error) {
+func HandleDeleteFileRequest(req *message.DeleteFileRequest) (*message.DeleteFileResponse, error) {
 	err := os.Remove(req.FileName)
 	if err != nil {
 		return nil, err

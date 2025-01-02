@@ -44,14 +44,14 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 
 	switch req.GetType() {
 	case message.PutFileRequestType:
-		req := *req.(*message.PutFileRequest)
+		req := req.(*message.PutFileRequest)
 		return sh.streamRequest(ctx, req)
 	default:
 		return sh.SendMessage(req)
 	}
 }
 
-func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
+func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
 	defer sh.Buffer.Reset()
 
 	path := files.GetClientDBPath(req.FileName)
@@ -96,13 +96,13 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 
 	switch res.GetType() {
 	case message.GetFileResponseType:
-		res := *res.(*decorated.GetFileResponse)
+		res := res.(*decorated.GetFileResponse)
 		return response.HandelGetFileResponse(ctx, sh.Session, res)
 	case message.PutFileResponseType:
-		res := *res.(*message.PutFileResponse)
+		res := res.(*message.PutFileResponse)
 		response.HandlePutFileResponse(res)
 	case message.DeleteFileResponseType:
-		res := *res.(*message.DeleteFileResponse)
+		res := res.(*message.DeleteFileResponse)
 		response.HandleDeleteFileResponse(res)
 	default:
 		return errors.New("unexpected response type")
