@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 )
 
-func GetServerDBPath(fileName string) string {
+func BuildServerFilePath(fileName string) string {
 	return filepath.Join(envs.ServerDBPath, fileName)
 }
 
-func GetClientDBPath(fileName string) string {
+func BuildClientFilePath(fileName string) string {
 	return filepath.Join(envs.ClientDBPath, fileName)
 }
 
-func GetSize(f *os.File) (int, error) {
+func SizeOf(f *os.File) (int, error) {
 	stat, err := f.Stat()
 	if err != nil {
 		return 0, err

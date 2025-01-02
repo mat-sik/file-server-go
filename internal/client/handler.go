@@ -42,7 +42,7 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch req.GetType() {
+	switch req.Type() {
 	case message.PutFileRequestType:
 		req := req.(*message.PutFileRequest)
 		return sh.streamRequest(ctx, req)
@@ -52,14 +52,14 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 }
 
 func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
-	path := files.GetClientDBPath(req.FileName)
+	path := files.BuildClientFilePath(req.FileName)
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer files.Close(file)
 
-	fileSize, err := files.GetSize(file)
+	fileSize, err := files.SizeOf(file)
 	req.Size = fileSize
 
 	if err = sh.SendMessage(req); err != nil {
@@ -81,7 +81,7 @@ func (sh SessionHandler) receiveResponse(
 		return nil, errors.New("expected response, received different type")
 	}
 
-	if res.GetType() == message.GetFileResponseType {
+	if res.Type() == message.GetFileResponseType {
 		getFileResponse := res.(*message.GetFileResponse)
 		res = decorateRes(getFileResponse)
 	}
@@ -90,7 +90,7 @@ func (sh SessionHandler) receiveResponse(
 }
 
 func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
-	switch res.GetType() {
+	switch res.Type() {
 	case message.GetFileResponseType:
 		res := res.(*decorated.GetFileResponse)
 		return response.HandelGetFileResponse(ctx, sh.Session, res)

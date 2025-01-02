@@ -46,7 +46,7 @@ func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) 
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch req.GetType() {
+	switch req.Type() {
 	case message.GetFileRequestType:
 		req := req.(*message.GetFileRequest)
 		return request.HandleGetFileRequest(req)
@@ -65,7 +65,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
-	switch res.GetType() {
+	switch res.Type() {
 	case message.GetFileResponseType:
 		res := res.(*request.GetFileResponse)
 		return sh.streamFileResponse(ctx, res)

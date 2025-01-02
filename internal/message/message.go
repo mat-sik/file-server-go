@@ -5,7 +5,7 @@ import (
 )
 
 type Message interface {
-	GetType() TypeName
+	Type() TypeName
 }
 
 type Request interface {
@@ -53,7 +53,7 @@ type GetFileRequest struct {
 	FileName string
 }
 
-func (req GetFileRequest) GetType() TypeName {
+func (req GetFileRequest) Type() TypeName {
 	return GetFileRequestType
 }
 
@@ -67,7 +67,7 @@ func NewGetFileResponse(status int, size int) *GetFileResponse {
 	return &GetFileResponse{Status: status, Size: size}
 }
 
-func (res GetFileResponse) GetType() TypeName {
+func (res GetFileResponse) Type() TypeName {
 	return GetFileResponseType
 }
 
@@ -77,7 +77,7 @@ type PutFileRequest struct {
 	Size     int
 }
 
-func (req PutFileRequest) GetType() TypeName {
+func (req PutFileRequest) Type() TypeName {
 	return PutFileRequestType
 }
 
@@ -90,7 +90,7 @@ func NewPutFileResponse(status int) *PutFileResponse {
 	return &PutFileResponse{Status: status}
 }
 
-func (res PutFileResponse) GetType() TypeName {
+func (res PutFileResponse) Type() TypeName {
 	return PutFileResponseType
 }
 
@@ -99,7 +99,7 @@ type DeleteFileRequest struct {
 	FileName string
 }
 
-func (req DeleteFileRequest) GetType() TypeName {
+func (req DeleteFileRequest) Type() TypeName {
 	return DeleteFileRequestType
 }
 
@@ -112,6 +112,6 @@ func NewDeleteFileResponse(status int) *DeleteFileResponse {
 	return &DeleteFileResponse{Status: status}
 }
 
-func (res DeleteFileResponse) GetType() TypeName {
+func (res DeleteFileResponse) Type() TypeName {
 	return DeleteFileResponseType
 }

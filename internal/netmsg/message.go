@@ -25,7 +25,7 @@ func sendMessage(msg message.Message, headerBuffer []byte, buffer messageBuffer,
 	}
 
 	messageSize := uint32(buffer.Len())
-	messageType := msg.GetType()
+	messageType := msg.Type()
 	messageHeader := header.Header{
 		PayloadSize: messageSize,
 		PayloadType: messageType,

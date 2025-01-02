@@ -11,7 +11,7 @@ import (
 )
 
 func HandleGetFileRequest(req *message.GetFileRequest) (*GetFileResponse, error) {
-	path := files.GetServerDBPath(req.FileName)
+	path := files.BuildServerFilePath(req.FileName)
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return &GetFileResponse{GetFileResponse: message.NewGetFileResponse(http.StatusNotFound, 0)}, nil
@@ -19,7 +19,7 @@ func HandleGetFileRequest(req *message.GetFileRequest) (*GetFileResponse, error)
 		return nil, err
 	}
 
-	fileSize, err := files.GetSize(file)
+	fileSize, err := files.SizeOf(file)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func HandlePutFileRequest(
 ) (*message.PutFileResponse, error) {
 	defer session.Buffer.Reset()
 
-	path := files.GetServerDBPath(req.FileName)
+	path := files.BuildServerFilePath(req.FileName)
 	file, err := os.Create(path)
 	if err != nil {
 		return nil, err

@@ -3,14 +3,14 @@ package envs
 import "os"
 
 var (
-	ClientDBPath = getClientDBPath()
-	ServerDBPath = getServerDBPath()
+	ClientDBPath = clientDBPath()
+	ServerDBPath = serverDBPath()
 )
 
-func getServerDBPath() string {
+func serverDBPath() string {
 	return os.Getenv("SERVER_DB_PATH")
 }
 
-func getClientDBPath() string {
+func clientDBPath() string {
 	return os.Getenv("CLIENT_DB_PATH")
 }
