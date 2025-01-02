@@ -7,6 +7,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
+	"net/http"
 	"os"
 )
 
@@ -15,7 +16,7 @@ func HandelGetFileResponse(
 	session netmsg.Session,
 	res *decorated.GetFileResponse,
 ) error {
-	if res.Status != 200 {
+	if res.Status != http.StatusOK {
 		fmt.Printf("getFileResponse status: %d\n", res.Status)
 	}
 	if err := handleGetFileResponse(ctx, session, res.FileName, res.Size); err != nil {
