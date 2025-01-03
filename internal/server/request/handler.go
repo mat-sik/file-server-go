@@ -54,7 +54,8 @@ func HandlePutFileRequest(
 }
 
 func HandleDeleteFileRequest(req *message.DeleteFileRequest) (*message.DeleteFileResponse, error) {
-	err := os.Remove(req.FileName)
+	path := files.BuildServerFilePath(req.FileName)
+	err := os.Remove(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.NewDeleteFileResponse(http.StatusNotFound), nil
 	}
