@@ -2,10 +2,10 @@ package response
 
 import (
 	"context"
-	"fmt"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
+	"log/slog"
 	"net/http"
 	"os"
 )
@@ -17,14 +17,14 @@ func HandelGetFileResponse(
 	res *message.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
-		fmt.Printf("getFileResponse status: %d\n", res.Status)
+		slog.Warn("GET file response:", "status", res.Status)
 	}
 
 	if err := handleGetFileResponse(ctx, session, fileName, res.Size); err != nil {
 		return err
 	}
 
-	fmt.Printf("handle get file response %d\n", res.Status)
+	slog.Info("GET file response:", "status", res.Status, "size", res.Size)
 	return nil
 }
 
@@ -43,9 +43,9 @@ func handleGetFileResponse(
 }
 
 func HandlePutFileResponse(res *message.PutFileResponse) {
-	fmt.Printf("handle put file response %d\n", res.Status)
+	slog.Info("PUT file response:", "status", res.Status)
 }
 
 func HandleDeleteFileResponse(res *message.DeleteFileResponse) {
-	fmt.Printf("handle delete file response %d\n", res.Status)
+	slog.Info("DELETE file response:", "status", res.Status)
 }
