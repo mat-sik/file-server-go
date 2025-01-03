@@ -7,7 +7,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	if err := server.RunServer(ctx, ":44696"); err != nil {
+	if err := server.Run(ctx, ":44696"); err != nil {
 		panic(err)
 	}
 }

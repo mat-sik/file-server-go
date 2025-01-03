@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func RunServer(ctx context.Context, addr string) error {
+func Run(ctx context.Context, addr string) error {
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return err
