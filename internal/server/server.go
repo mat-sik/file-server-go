@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
+	"errors"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
+	"io"
+	"log/slog"
 	"net"
 )
 
@@ -23,7 +26,10 @@ func Run(ctx context.Context, addr string) error {
 		case conn := <-connCh:
 			go handleRequest(ctx, conn, errCh)
 		case err = <-errCh:
-			return err
+			if !errors.Is(err, io.EOF) {
+				return err
+			}
+			slog.Info("Connection closed from client")
 		}
 	}
 }
@@ -45,9 +51,12 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	session := netmsg.NewSession(conn)
 	sessionHandler := SessionHandler{Session: session}
 
-	if err := sessionHandler.HandleRequest(ctx); err != nil {
-		errCh <- err
+	var err error
+	for err == nil {
+		err = sessionHandler.HandleRequest(ctx)
 	}
+
+	errCh <- err
 }
 
 func safeConnectionClose(conn net.Conn) {

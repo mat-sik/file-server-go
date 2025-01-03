@@ -18,19 +18,9 @@ func main() {
 		panic(err)
 	}
 
-	webClient, err = client.NewClient(":44696")
-	if err != nil {
-		panic(err)
-	}
-
 	delFileReq := &message.DeleteFileRequest{FileName: "foo.txt"}
 
 	err = webClient.Run(delFileReq)
-	if err != nil {
-		panic(err)
-	}
-
-	webClient, err = client.NewClient(":44696")
 	if err != nil {
 		panic(err)
 	}
