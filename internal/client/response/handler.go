@@ -34,8 +34,6 @@ func handleGetFileResponse(
 	fileName string,
 	fileSize int,
 ) error {
-	defer session.Buffer.Reset()
-
 	path := files.BuildClientFilePath(fileName)
 	file, err := os.Create(path)
 	if err != nil {

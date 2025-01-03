@@ -76,6 +76,8 @@ func (sh SessionHandler) receiveResponse() (message.Response, error) {
 }
 
 func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
+	defer sh.Buffer.Reset()
+
 	switch res := res.(type) {
 	case *message.GetFileResponse:
 		return sh.handleGetFileResponse(ctx, res)

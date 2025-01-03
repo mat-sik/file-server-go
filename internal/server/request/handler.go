@@ -40,8 +40,6 @@ func HandlePutFileRequest(
 	session netmsg.Session,
 	req *message.PutFileRequest,
 ) (*message.PutFileResponse, error) {
-	defer session.Buffer.Reset()
-
 	path := files.BuildServerFilePath(req.FileName)
 	file, err := os.Create(path)
 	if err != nil {
