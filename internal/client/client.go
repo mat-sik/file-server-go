@@ -7,18 +7,23 @@ import (
 	"net"
 )
 
-func RunClient(ctx context.Context, addr string, req message.Request) error {
+type Client struct {
+	sessionHandler SessionHandler
+}
+
+func NewClient(addr string) (Client, error) {
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
-		return err
+		return Client{}, err
 	}
 
 	session := netmsg.NewSession(conn)
 	sessionHandler := SessionHandler{Session: session}
+	return Client{sessionHandler: sessionHandler}, nil
+}
 
-	if err = sessionHandler.HandleRequest(ctx, req); err != nil {
-		return err
-	}
+func (c Client) Run(req message.Request) error {
+	ctx := context.Background()
 
-	return nil
+	return c.sessionHandler.HandleRequest(ctx, req)
 }

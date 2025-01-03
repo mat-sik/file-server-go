@@ -1,15 +1,20 @@
 package main
 
 import (
-	"context"
 	"github.com/mat-sik/file-server-go/internal/client"
 	"github.com/mat-sik/file-server-go/internal/message"
 )
 
 func main() {
-	ctx := context.Background()
+	webClient, err := client.NewClient(":44696")
+	if err != nil {
+		panic(err)
+	}
+
 	req := &message.GetFileRequest{FileName: "foo.txt"}
-	if err := client.RunClient(ctx, ":44696", req); err != nil {
+
+	err = webClient.Run(req)
+	if err != nil {
 		panic(err)
 	}
 }
