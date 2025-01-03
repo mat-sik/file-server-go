@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"net/http"
 	"os"
@@ -14,12 +13,14 @@ import (
 func HandelGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
-	res *decorated.GetFileResponse,
+	fileName string,
+	res *message.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
 		fmt.Printf("getFileResponse status: %d\n", res.Status)
 	}
-	if err := handleGetFileResponse(ctx, session, res.FileName, res.Size); err != nil {
+
+	if err := handleGetFileResponse(ctx, session, fileName, res.Size); err != nil {
 		return err
 	}
 

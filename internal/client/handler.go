@@ -3,11 +3,9 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/mat-sik/file-server-go/internal/client/response"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/message/decorated"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"os"
 	"time"
@@ -22,15 +20,11 @@ func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	decorateRes := func(res *message.GetFileResponse) *decorated.GetFileResponse {
-		req, ok := req.(*message.GetFileRequest)
-		if !ok {
-			panic(fmt.Sprintf("GetFileRequest expected, received: %v", req))
-		}
-		return &decorated.GetFileResponse{GetFileResponse: res, FileName: req.FileName}
+	if req, ok := req.(*message.GetFileRequest); ok {
+		ctx = contextWithFileName(ctx, req.FileName)
 	}
 
-	res, err := sh.receiveResponse(decorateRes)
+	res, err := sh.receiveResponse()
 	if err != nil {
 		return err
 	}
@@ -67,9 +61,7 @@ func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFile
 	return sh.StreamToNet(ctx, file, fileSize)
 }
 
-func (sh SessionHandler) receiveResponse(
-	decorateRes func(fileResponse *message.GetFileResponse) *decorated.GetFileResponse,
-) (message.Response, error) {
+func (sh SessionHandler) receiveResponse() (message.Response, error) {
 	msg, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
@@ -80,18 +72,13 @@ func (sh SessionHandler) receiveResponse(
 		return nil, errors.New("expected response, received different type")
 	}
 
-	if res.Type() == message.GetFileResponseType {
-		getFileResponse := res.(*message.GetFileResponse)
-		res = decorateRes(getFileResponse)
-	}
-
 	return res, nil
 }
 
 func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
 	switch res := res.(type) {
-	case *decorated.GetFileResponse:
-		return response.HandelGetFileResponse(ctx, sh.Session, res)
+	case *message.GetFileResponse:
+		return sh.handleGetFileResponse(ctx, res)
 	case *message.PutFileResponse:
 		response.HandlePutFileResponse(res)
 	case *message.DeleteFileResponse:
@@ -102,5 +89,27 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 
 	return nil
 }
+
+func (sh SessionHandler) handleGetFileResponse(
+	ctx context.Context,
+	res *message.GetFileResponse,
+) error {
+	fileName, ok := fileNameFromContext(ctx)
+	if !ok {
+		return errors.New("file name not found in the context")
+	}
+	return response.HandelGetFileResponse(ctx, sh.Session, fileName, res)
+}
+
+func contextWithFileName(ctx context.Context, fileName string) context.Context {
+	return context.WithValue(ctx, fileNameKey{}, fileName)
+}
+
+func fileNameFromContext(ctx context.Context) (string, bool) {
+	res, ok := ctx.Value(fileNameKey{}).(string)
+	return res, ok
+}
+
+type fileNameKey struct{}
 
 const timeForRequest = 5 * time.Second
