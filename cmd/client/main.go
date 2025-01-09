@@ -12,21 +12,21 @@ func main() {
 		panic(err)
 	}
 
-	getFileReq := &message.GetFileRequest{FileName: "foo.txt"}
+	getFileReq := message.GetFileRequest{FileName: "foo.txt"}
 
 	err = webClient.Run(getFileReq)
 	if err != nil {
 		panic(err)
 	}
 
-	delFileReq := &message.DeleteFileRequest{FileName: "foo.txt"}
+	delFileReq := message.DeleteFileRequest{FileName: "foo.txt"}
 
 	err = webClient.Run(delFileReq)
 	if err != nil {
 		panic(err)
 	}
 
-	putFileReq := &message.PutFileRequest{FileName: "foo.txt"}
+	putFileReq := message.PutFileRequest{FileName: "foo.txt"}
 
 	err = webClient.Run(putFileReq)
 	if err != nil {

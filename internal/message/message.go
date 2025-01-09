@@ -9,10 +9,6 @@ type GetFileResponse struct {
 	Size   int
 }
 
-func NewGetFileResponse(status int, size int) *GetFileResponse {
-	return &GetFileResponse{Status: status, Size: size}
-}
-
 type PutFileRequest struct {
 	FileName string
 	Size     int
@@ -22,20 +18,12 @@ type PutFileResponse struct {
 	Status int
 }
 
-func NewPutFileResponse(status int) *PutFileResponse {
-	return &PutFileResponse{Status: status}
-}
-
 type DeleteFileRequest struct {
 	FileName string
 }
 
 type DeleteFileResponse struct {
 	Status int
-}
-
-func NewDeleteFileResponse(status int) *DeleteFileResponse {
-	return &DeleteFileResponse{Status: status}
 }
 
 type Message interface {

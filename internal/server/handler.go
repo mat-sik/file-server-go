@@ -49,11 +49,11 @@ func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) 
 	defer cancel()
 
 	switch req := req.(type) {
-	case *message.GetFileRequest:
+	case message.GetFileRequest:
 		return request.HandleGetFileRequest(req)
-	case *message.PutFileRequest:
+	case message.PutFileRequest:
 		return request.HandlePutFileRequest(ctx, sh.Session, req)
-	case *message.DeleteFileRequest:
+	case message.DeleteFileRequest:
 		return request.HandleDeleteFileRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
@@ -65,7 +65,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	defer cancel()
 
 	switch res := res.(type) {
-	case *request.GetFileResponse:
+	case request.GetFileResponse:
 		return sh.streamFileResponse(ctx, res)
 	default:
 		return sh.SendMessage(res)
@@ -74,7 +74,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 
 func (sh SessionHandler) streamFileResponse(
 	ctx context.Context,
-	res *request.GetFileResponse,
+	res request.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
 		return sh.SendMessage(res)

@@ -14,7 +14,7 @@ func HandelGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
 	fileName string,
-	res *message.GetFileResponse,
+	res message.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
 		slog.Warn("GET file response:", "status", res.Status)
@@ -42,10 +42,10 @@ func handleGetFileResponse(
 	return session.StreamFromNet(ctx, file, fileSize)
 }
 
-func HandlePutFileResponse(res *message.PutFileResponse) {
+func HandlePutFileResponse(res message.PutFileResponse) {
 	slog.Info("PUT file response:", "status", res.Status)
 }
 
-func HandleDeleteFileResponse(res *message.DeleteFileResponse) {
+func HandleDeleteFileResponse(res message.DeleteFileResponse) {
 	slog.Info("DELETE file response:", "status", res.Status)
 }

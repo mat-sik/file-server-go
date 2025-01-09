@@ -10,7 +10,7 @@ import (
 )
 
 func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
-	in := &message.PutFileRequest{FileName: "huge_file_name", Size: 404}
+	in := message.PutFileRequest{FileName: "huge_file_name", Size: 404}
 	sizeBuffer := make([]byte, header.Size)
 	limitedBuffer := limited.NewBuffer(make([]byte, 0, 1024))
 	bytesBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
@@ -36,10 +36,10 @@ func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
 	}
 
 	switch v := out.(type) {
-	case *message.PutFileRequest:
+	case message.PutFileRequest:
 		fmt.Printf("%v", v)
 	default:
-		fmt.Printf("%v", v)
+		t.Errorf("%v", v)
 	}
 }
 

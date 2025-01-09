@@ -69,7 +69,7 @@ func receiveMessage(reader io.Reader, buffer messageBuffer) (message.Message, er
 
 func toProto(msg message.Message) netmsgpb.MessageWrapper {
 	switch msg := msg.(type) {
-	case *message.GetFileRequest:
+	case message.GetFileRequest:
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_GetFileRequest{
 				GetFileRequest: &netmsgpb.GetFileRequest{
@@ -77,7 +77,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
-	case *message.GetFileResponse:
+	case message.GetFileResponse:
 		status := int32(msg.Status)
 		size := int64(msg.Size)
 		return netmsgpb.MessageWrapper{
@@ -88,7 +88,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
-	case *message.PutFileRequest:
+	case message.PutFileRequest:
 		size := int64(msg.Size)
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_PutFileRequest{
@@ -98,7 +98,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
-	case *message.PutFileResponse:
+	case message.PutFileResponse:
 		status := int32(msg.Status)
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_PutFileResponse{
@@ -107,7 +107,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
-	case *message.DeleteFileRequest:
+	case message.DeleteFileRequest:
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_DeleteFileRequest{
 				DeleteFileRequest: &netmsgpb.DeleteFileRequest{
@@ -115,7 +115,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
-	case *message.DeleteFileResponse:
+	case message.DeleteFileResponse:
 		status := int32(msg.Status)
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_DeleteFileResponse{
@@ -133,34 +133,34 @@ func fromProto(wrapper *netmsgpb.MessageWrapper) message.Message {
 	switch msg := wrapper.GetMessage().(type) {
 	case *netmsgpb.MessageWrapper_GetFileRequest:
 		req := msg.GetFileRequest
-		return &message.GetFileRequest{
+		return message.GetFileRequest{
 			FileName: req.GetFileName(),
 		}
 	case *netmsgpb.MessageWrapper_GetFileResponse:
 		req := msg.GetFileResponse
-		return &message.GetFileResponse{
+		return message.GetFileResponse{
 			Status: int(req.GetStatus()),
 			Size:   int(req.GetSize()),
 		}
 	case *netmsgpb.MessageWrapper_PutFileRequest:
 		req := msg.PutFileRequest
-		return &message.PutFileRequest{
+		return message.PutFileRequest{
 			FileName: req.GetFileName(),
 			Size:     int(req.GetSize()),
 		}
 	case *netmsgpb.MessageWrapper_PutFileResponse:
 		req := msg.PutFileResponse
-		return &message.PutFileResponse{
+		return message.PutFileResponse{
 			Status: int(req.GetStatus()),
 		}
 	case *netmsgpb.MessageWrapper_DeleteFileRequest:
 		req := msg.DeleteFileRequest
-		return &message.DeleteFileRequest{
+		return message.DeleteFileRequest{
 			FileName: req.GetFileName(),
 		}
 	case *netmsgpb.MessageWrapper_DeleteFileResponse:
 		req := msg.DeleteFileResponse
-		return &message.DeleteFileResponse{
+		return message.DeleteFileResponse{
 			Status: int(req.GetStatus()),
 		}
 	default:

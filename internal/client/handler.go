@@ -20,7 +20,7 @@ func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	if req, ok := req.(*message.GetFileRequest); ok {
+	if req, ok := req.(message.GetFileRequest); ok {
 		ctx = contextWithFileName(ctx, req.FileName)
 	}
 
@@ -37,14 +37,14 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 	defer cancel()
 
 	switch req := req.(type) {
-	case *message.PutFileRequest:
+	case message.PutFileRequest:
 		return sh.streamRequest(ctx, req)
 	default:
 		return sh.SendMessage(req)
 	}
 }
 
-func (sh SessionHandler) streamRequest(ctx context.Context, req *message.PutFileRequest) error {
+func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
 	path := files.BuildClientFilePath(req.FileName)
 	file, err := os.Open(path)
 	if err != nil {
@@ -79,11 +79,11 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 	defer sh.Buffer.Reset()
 
 	switch res := res.(type) {
-	case *message.GetFileResponse:
+	case message.GetFileResponse:
 		return sh.handleGetFileResponse(ctx, res)
-	case *message.PutFileResponse:
+	case message.PutFileResponse:
 		response.HandlePutFileResponse(res)
-	case *message.DeleteFileResponse:
+	case message.DeleteFileResponse:
 		response.HandleDeleteFileResponse(res)
 	default:
 		return errors.New("unexpected response type")
@@ -94,7 +94,7 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 
 func (sh SessionHandler) handleGetFileResponse(
 	ctx context.Context,
-	res *message.GetFileResponse,
+	res message.GetFileResponse,
 ) error {
 	fileName, ok := fileNameFromContext(ctx)
 	if !ok {
