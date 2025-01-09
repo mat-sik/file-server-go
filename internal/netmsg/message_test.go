@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/netmsg/header"
 	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
 	"testing"
 )
 
 func Test_SendMessage_And_ReceiveMessage(t *testing.T) {
-	//
-	in := message.PutFileRequest{FileName: "huge_file_name", Size: 404}
-	sizeBuffer := make([]byte, 12)
+	in := &message.PutFileRequest{FileName: "huge_file_name", Size: 404}
+	sizeBuffer := make([]byte, header.Size)
 	limitedBuffer := limited.NewBuffer(make([]byte, 0, 1024))
 	bytesBuffer := bytes.NewBuffer(make([]byte, 0, 1024))
 
