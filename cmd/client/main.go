@@ -5,6 +5,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/message"
 )
 
+//go:generate protoc --proto_path=./../.. --go_out=./../.. --go_opt=module=github.com/mat-sik/file-server-go netmsg.proto
 func main() {
 	webClient, err := client.NewClient(":44696")
 	if err != nil {

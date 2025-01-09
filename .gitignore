@@ -1,4 +1,3 @@
-**/.idea/*
+.idea
 **/*.txt
-/client
-/server
+internal/generated
