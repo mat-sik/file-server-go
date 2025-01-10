@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-type SessionHandler struct {
+type sessionHandler struct {
 	netmsg.Session
 }
 
-func (sh SessionHandler) HandleRequest(ctx context.Context) error {
+func (sh sessionHandler) handleRequest(ctx context.Context) error {
 	req, err := sh.receiveRequest()
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (sh SessionHandler) HandleRequest(ctx context.Context) error {
 	return sh.deliverResponse(ctx, res)
 }
 
-func (sh SessionHandler) receiveRequest() (message.Request, error) {
+func (sh sessionHandler) receiveRequest() (message.Request, error) {
 	msg, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (sh SessionHandler) receiveRequest() (message.Request, error) {
 	return req, nil
 }
 
-func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) (message.Response, error) {
+func (sh sessionHandler) routeRequest(ctx context.Context, req message.Request) (message.Response, error) {
 	defer sh.Buffer.Reset()
 
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
@@ -60,7 +60,7 @@ func (sh SessionHandler) routeRequest(ctx context.Context, req message.Request) 
 	}
 }
 
-func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Response) error {
+func (sh sessionHandler) deliverResponse(ctx context.Context, res message.Response) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
@@ -72,7 +72,7 @@ func (sh SessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	}
 }
 
-func (sh SessionHandler) streamFileResponse(
+func (sh sessionHandler) streamFileResponse(
 	ctx context.Context,
 	res request.GetFileResponse,
 ) error {

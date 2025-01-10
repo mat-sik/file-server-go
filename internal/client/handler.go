@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-type SessionHandler struct {
+type sessionHandler struct {
 	netmsg.Session
 }
 
-func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request) error {
+func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) error {
 	if err := sh.deliverRequest(ctx, req); err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (sh SessionHandler) HandleRequest(ctx context.Context, req message.Request)
 	return sh.handleResponse(ctx, res)
 }
 
-func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request) error {
+func (sh sessionHandler) deliverRequest(ctx context.Context, req message.Request) error {
 	ctx, cancel := context.WithTimeout(ctx, timeForRequest)
 	defer cancel()
 
@@ -44,7 +44,7 @@ func (sh SessionHandler) deliverRequest(ctx context.Context, req message.Request
 	}
 }
 
-func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
+func (sh sessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
 	path := files.BuildClientFilePath(req.FileName)
 	file, err := os.Open(path)
 	if err != nil {
@@ -61,7 +61,7 @@ func (sh SessionHandler) streamRequest(ctx context.Context, req message.PutFileR
 	return sh.StreamToNet(ctx, file, fileSize)
 }
 
-func (sh SessionHandler) receiveResponse() (message.Response, error) {
+func (sh sessionHandler) receiveResponse() (message.Response, error) {
 	msg, err := sh.ReceiveMessage()
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (sh SessionHandler) receiveResponse() (message.Response, error) {
 	return res, nil
 }
 
-func (sh SessionHandler) handleResponse(ctx context.Context, res message.Response) error {
+func (sh sessionHandler) handleResponse(ctx context.Context, res message.Response) error {
 	defer sh.Buffer.Reset()
 
 	switch res := res.(type) {
@@ -92,7 +92,7 @@ func (sh SessionHandler) handleResponse(ctx context.Context, res message.Respons
 	return nil
 }
 
-func (sh SessionHandler) handleGetFileResponse(
+func (sh sessionHandler) handleGetFileResponse(
 	ctx context.Context,
 	res message.GetFileResponse,
 ) error {

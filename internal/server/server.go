@@ -49,11 +49,11 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	defer safeConnectionClose(conn)
 
 	session := netmsg.NewSession(conn)
-	sessionHandler := SessionHandler{Session: session}
+	handler := sessionHandler{Session: session}
 
 	var err error
 	for err == nil {
-		err = sessionHandler.HandleRequest(ctx)
+		err = handler.handleRequest(ctx)
 	}
 
 	errCh <- err

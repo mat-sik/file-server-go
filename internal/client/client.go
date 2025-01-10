@@ -8,7 +8,7 @@ import (
 )
 
 type Client struct {
-	sessionHandler SessionHandler
+	sessionHandler sessionHandler
 }
 
 func NewClient(addr string) (Client, error) {
@@ -18,12 +18,15 @@ func NewClient(addr string) (Client, error) {
 	}
 
 	session := netmsg.NewSession(conn)
-	sessionHandler := SessionHandler{Session: session}
-	return Client{sessionHandler: sessionHandler}, nil
+	return Client{
+		sessionHandler: sessionHandler{
+			Session: session,
+		},
+	}, nil
 }
 
 func (c Client) Run(req message.Request) error {
 	ctx := context.Background()
 
-	return c.sessionHandler.HandleRequest(ctx, req)
+	return c.sessionHandler.handleRequest(ctx, req)
 }
