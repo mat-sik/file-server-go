@@ -3,7 +3,7 @@ package header
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
+	"github.com/mat-sik/limbuf/limited"
 )
 
 type Header struct {

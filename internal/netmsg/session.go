@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/netmsg/header"
-	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
+	"github.com/mat-sik/limbuf/limited"
 	"io"
 	"net"
 )

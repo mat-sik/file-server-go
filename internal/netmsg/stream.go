@@ -2,7 +2,7 @@ package netmsg
 
 import (
 	"context"
-	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
+	"github.com/mat-sik/limbuf/limited"
 	"io"
 )
 

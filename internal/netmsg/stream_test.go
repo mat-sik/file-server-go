@@ -3,7 +3,7 @@ package netmsg
 import (
 	"bytes"
 	"context"
-	"github.com/mat-sik/file-server-go/internal/netmsg/limited"
+	"github.com/mat-sik/limbuf/limited"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io"

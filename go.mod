@@ -3,6 +3,7 @@ module github.com/mat-sik/file-server-go
 go 1.23.0
 
 require (
+	github.com/mat-sik/limbuf v1.0.0
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/protobuf v1.36.2
 )
