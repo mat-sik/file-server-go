@@ -22,7 +22,7 @@ type Session struct {
 
 func (s Session) SendMessage(msg message.Message) error {
 	defer s.Buffer.Reset()
-	return sendMessage(msg, s.HeaderBuffer, s.Buffer, s.Conn)
+	return sendMessage(msg, s.HeaderBuffer, s.Conn)
 }
 
 func (s Session) ReceiveMessage() (message.Message, error) {

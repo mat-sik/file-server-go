@@ -1,0 +1,41 @@
+syntax = "proto3";
+package netmsg;
+
+option go_package = "github.com/mat-sik/file-server-go/internal/generated/netmsgpb";
+
+message MessageWrapper {
+  oneof message {
+    GetFileRequest get_file_request = 1;
+    GetFileResponse get_file_response = 2;
+    PutFileRequest put_file_request = 3;
+    PutFileResponse put_file_response = 4;
+    DeleteFileRequest delete_file_request = 5;
+    DeleteFileResponse delete_file_response = 6;
+  }
+}
+
+message GetFileRequest {
+  optional string fileName = 1;
+}
+
+message GetFileResponse {
+  optional int32 status = 1;
+  optional int64 size = 2;
+}
+
+message PutFileRequest {
+  optional string fileName = 1;
+  optional int64 size = 2;
+}
+
+message PutFileResponse {
+  optional int32 status = 1;
+}
+
+message DeleteFileRequest {
+  optional string fileName = 1;
+}
+
+message DeleteFileResponse {
+  optional int32 status = 1;
+}
