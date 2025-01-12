@@ -3,26 +3,17 @@ package netmsg
 import (
 	"context"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/netmsg/header"
-	"github.com/mat-sik/limbuf/limited"
 	"io"
 	"net"
 )
 
-type buffer interface {
-	streamBuffer
-	messageBuffer
-}
-
 type Session struct {
-	Conn         io.ReadWriteCloser
-	Buffer       buffer
-	HeaderBuffer []byte
+	Conn   io.ReadWriteCloser
+	Buffer []byte
 }
 
 func (s Session) SendMessage(msg message.Message) error {
-	defer s.Buffer.Reset()
-	return sendMessage(msg, s.HeaderBuffer, s.Conn)
+	return sendMessage(msg, s.Buffer, s.Conn)
 }
 
 func (s Session) ReceiveMessage() (message.Message, error) {
@@ -30,21 +21,28 @@ func (s Session) ReceiveMessage() (message.Message, error) {
 }
 
 func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
-	defer s.Buffer.Reset()
-	return stream(ctx, reader, s.Conn, s.Buffer, toTransfer)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	limitedReader := io.LimitReader(reader, int64(toTransfer))
+	_, err := io.CopyBuffer(s.Conn, limitedReader, s.Buffer)
+	return err
 }
 
 func (s Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
-	return stream(ctx, s.Conn, writer, s.Buffer, toTransfer)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	limitedReader := io.LimitReader(s.Conn, int64(toTransfer))
+	_, err := io.CopyBuffer(writer, limitedReader, s.Buffer)
+	return err
 }
 
 func NewSession(conn net.Conn) Session {
-	limitedBuffer := limited.NewBuffer(make([]byte, 0, bufferSize))
-	headerBuffer := make([]byte, header.Size)
+	buffer := make([]byte, bufferSize)
 	return Session{
-		Conn:         conn,
-		Buffer:       limitedBuffer,
-		HeaderBuffer: headerBuffer,
+		Conn:   conn,
+		Buffer: buffer,
 	}
 }
 

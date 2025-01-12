@@ -5,22 +5,11 @@ import (
 	"github.com/mat-sik/file-server-go/internal/generated/netmsgpb"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/netmsg/header"
-	"github.com/mat-sik/limbuf/limited"
 	"google.golang.org/protobuf/proto"
 	"io"
 )
 
-type messageBuffer interface {
-	io.WriterTo
-	io.Writer
-	io.Reader
-	limited.MinReader
-	limited.ByteIterator
-	limited.Resettable
-	limited.ReadableLength
-}
-
-func sendMessage(msg message.Message, headerBuffer []byte, writer io.Writer) error {
+func sendMessage(msg message.Message, buffer []byte, writer io.Writer) error {
 	wrapperMsg := toProto(msg)
 
 	msgBytes, err := proto.Marshal(&wrapperMsg)
@@ -28,39 +17,41 @@ func sendMessage(msg message.Message, headerBuffer []byte, writer io.Writer) err
 		return err
 	}
 
-	messageSize := uint32(len(msgBytes))
-	messageHeader := header.Header{
-		PayloadSize: messageSize,
+	msgSize := uint32(len(msgBytes))
+	msgHeader := header.Header{
+		PayloadSize: msgSize,
 	}
-	if err := header.EncodeHeader(messageHeader, headerBuffer); err != nil {
+	if err = header.EncodeHeader(msgHeader, buffer); err != nil {
 		return err
 	}
 
-	if _, err := writer.Write(headerBuffer); err != nil {
+	if _, err = writer.Write(buffer[:header.Size]); err != nil {
 		return err
 	}
-	if _, err := writer.Write(msgBytes); err != nil {
+	if _, err = writer.Write(msgBytes); err != nil {
 		return err
 	}
 	return nil
 }
 
-func receiveMessage(reader io.Reader, buffer messageBuffer) (message.Message, error) {
-	if err := buffer.ReadMin(reader, header.Size); err != nil {
+func receiveMessage(reader io.Reader, buffer []byte) (message.Message, error) {
+	limitedReader := io.LimitReader(reader, int64(header.Size))
+	if _, err := limitedReader.Read(buffer); err != nil {
 		return nil, err
 	}
 
-	messageHeader := header.DecodeHeader(buffer)
-
-	toRead := messageHeader.PayloadSize - uint32(buffer.Len())
-	if err := buffer.ReadMin(reader, int(toRead)); err != nil {
+	msgHeader, err := header.DecodeHeader(buffer)
+	if err != nil {
 		return nil, err
 	}
 
-	msgBytes := buffer.Next(int(messageHeader.PayloadSize))
+	limitedReader = io.LimitReader(reader, int64(msgHeader.PayloadSize))
+	if _, err = limitedReader.Read(buffer); err != nil {
+		return nil, err
+	}
 
 	msg := &netmsgpb.MessageWrapper{}
-	if err := proto.Unmarshal(msgBytes, msg); err != nil {
+	if err = proto.Unmarshal(buffer[:msgHeader.PayloadSize], msg); err != nil {
 		return nil, err
 	}
 
