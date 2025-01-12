@@ -21,12 +21,18 @@ func (s Session) ReceiveMessage() (message.Message, error) {
 }
 
 func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	limitedReader := io.LimitReader(reader, int64(toTransfer))
 	_, err := io.CopyBuffer(s.Conn, limitedReader, s.Buffer)
 	return err
 }
 
 func (s Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer int) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	limitedReader := io.LimitReader(s.Conn, int64(toTransfer))
 	_, err := io.CopyBuffer(writer, limitedReader, s.Buffer)
 	return err
