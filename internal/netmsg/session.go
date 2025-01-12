@@ -20,11 +20,6 @@ func (s Session) ReceiveMessage() (message.Message, error) {
 	return receiveMessage(s.Conn, s.Buffer)
 }
 
-//func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
-//	buffer := limited.NewBuffer(make([]byte, 0, 4*1024))
-//	return stream(ctx, reader, s.Conn, buffer, toTransfer)
-//}
-
 func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
 	limitedReader := io.LimitReader(reader, int64(toTransfer))
 	_, err := io.CopyBuffer(s.Conn, limitedReader, s.Buffer)
