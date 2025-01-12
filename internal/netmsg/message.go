@@ -17,11 +17,11 @@ func sendMessage(msg message.Message, buffer []byte, writer io.Writer) error {
 		return err
 	}
 
-	messageSize := uint32(len(msgBytes))
-	messageHeader := header.Header{
-		PayloadSize: messageSize,
+	msgSize := uint32(len(msgBytes))
+	msgHeader := header.Header{
+		PayloadSize: msgSize,
 	}
-	if err = header.EncodeHeader(messageHeader, buffer); err != nil {
+	if err = header.EncodeHeader(msgHeader, buffer); err != nil {
 		return err
 	}
 
@@ -40,18 +40,18 @@ func receiveMessage(reader io.Reader, buffer []byte) (message.Message, error) {
 		return nil, err
 	}
 
-	messageHeader, err := header.DecodeHeader(buffer)
+	msgHeader, err := header.DecodeHeader(buffer)
 	if err != nil {
 		return nil, err
 	}
 
-	limitedReader = io.LimitReader(reader, int64(messageHeader.PayloadSize))
+	limitedReader = io.LimitReader(reader, int64(msgHeader.PayloadSize))
 	if _, err = limitedReader.Read(buffer); err != nil {
 		return nil, err
 	}
 
 	msg := &netmsgpb.MessageWrapper{}
-	if err = proto.Unmarshal(buffer[:messageHeader.PayloadSize], msg); err != nil {
+	if err = proto.Unmarshal(buffer[:msgHeader.PayloadSize], msg); err != nil {
 		return nil, err
 	}
 
