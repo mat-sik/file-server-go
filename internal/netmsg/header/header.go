@@ -3,37 +3,35 @@ package header
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/mat-sik/limbuf/limited"
 )
 
 type Header struct {
 	PayloadSize uint32
 }
 
-func EncodeHeader(header Header, headerBuffer []byte) error {
-	return encodeMessageSize(header.PayloadSize, headerBuffer)
+func EncodeHeader(header Header, buffer []byte) error {
+	if err := validateHeaderBufferSize(buffer, uint32ByteSize); err != nil {
+		return err
+	}
+	binary.BigEndian.PutUint32(buffer, header.PayloadSize)
+	return nil
 }
 
-func DecodeHeader(byteIterator limited.ByteIterator) Header {
-	uint32ByteSlice := byteIterator.Next(uint32ByteSize)
+func DecodeHeader(buffer []byte) (Header, error) {
+	if len(buffer) < Size {
+		return Header{}, errors.New("buffer has not enough bytes to decode header")
+	}
+	uint32ByteSlice := buffer[:uint32ByteSize]
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 
 	return Header{
 		PayloadSize: payloadSize,
-	}
-}
-
-func encodeMessageSize(messageSize uint32, headerBuffer []byte) error {
-	if err := validateHeaderBufferSize(headerBuffer, uint32ByteSize); err != nil {
-		return err
-	}
-	binary.BigEndian.PutUint32(headerBuffer, messageSize)
-	return nil
+	}, nil
 }
 
 func validateHeaderBufferSize(headerBuffer []byte, size int) error {
 	if cap(headerBuffer) < size {
-		return errors.New("header buffer too small")
+		return errors.New("header buffer has not enough capacity")
 	}
 	return nil
 }
