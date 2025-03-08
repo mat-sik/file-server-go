@@ -50,7 +50,7 @@ func (sh sessionHandler) streamRequest(ctx context.Context, req message.PutFileR
 	if err != nil {
 		return err
 	}
-	defer files.Close(file)
+	defer files.LoggedClose(file)
 
 	fileSize, err := files.SizeOf(file)
 	req.Size = fileSize

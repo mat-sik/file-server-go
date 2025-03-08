@@ -12,7 +12,7 @@ type Service struct {
 func (s *Service) AddFile(filename string) FileHandle {
 	path := buildServerFilePath(filename)
 	fileHandler := NewFileHandle(path)
-	s.files.Store(filename, fileHandler)
+	s.files.Store(path, fileHandler)
 	return fileHandler
 }
 
@@ -25,19 +25,21 @@ func (s *Service) GetFile(filename string) (FileHandle, bool) {
 func (s *Service) RemoveFile(filename string) error {
 	path := buildServerFilePath(filename)
 	value, ok := s.files.Load(path)
-	if ok {
+	if !ok {
 		return os.ErrNotExist
 	}
 	fileHandle := value.(FileHandle)
 	if err := fileHandle.ExecuteWriteOP(os.Remove); err != nil {
 		return err
 	}
-	s.files.Delete(filename)
+	s.files.Delete(path)
 	return nil
 }
 
 func NewService() Service {
-	fileService := Service{}
+	fileService := Service{
+		files: &sync.Map{},
+	}
 
 	filenames := getServerStoredFilenames()
 	for _, filename := range filenames {
