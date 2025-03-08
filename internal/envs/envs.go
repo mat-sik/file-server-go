@@ -3,14 +3,14 @@ package envs
 import "os"
 
 var (
-	ClientDBPath = clientDBPath()
-	ServerDBPath = serverDBPath()
+	ClientStoragePath = clientStoragePath()
+	ServerStoragePath = serverStoragePath()
 )
 
-func serverDBPath() string {
-	return os.Getenv("SERVER_DB_PATH")
+func serverStoragePath() string {
+	return os.Getenv("SERVER_STORAGE_PATH")
 }
 
-func clientDBPath() string {
-	return os.Getenv("CLIENT_DB_PATH")
+func clientStoragePath() string {
+	return os.Getenv("CLIENT_STORAGE_PATH")
 }
