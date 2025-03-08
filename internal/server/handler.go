@@ -13,6 +13,7 @@ import (
 
 type sessionHandler struct {
 	netmsg.Session
+	request.Handler
 }
 
 func (sh sessionHandler) handleRequest(ctx context.Context) error {
@@ -48,11 +49,11 @@ func (sh sessionHandler) routeRequest(ctx context.Context, req message.Request) 
 
 	switch req := req.(type) {
 	case message.GetFileRequest:
-		return request.HandleGetFileRequest(req)
+		return sh.HandleGetFileRequest(req)
 	case message.PutFileRequest:
-		return request.HandlePutFileRequest(ctx, sh.Session, req)
+		return sh.HandlePutFileRequest(ctx, sh.Session, req)
 	case message.DeleteFileRequest:
-		return request.HandleDeleteFileRequest(req)
+		return sh.HandleDeleteFileRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
 	}
@@ -78,11 +79,11 @@ func (sh sessionHandler) streamFileResponse(
 		return sh.SendMessage(res)
 	}
 
-	defer files.Close(res.File)
+	defer files.LoggedClose(&res.ReadLockedFile)
 	if err := sh.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return sh.StreamToNet(ctx, res.File, res.Size)
+	return sh.StreamToNet(ctx, res.ReadLockedFile, res.Size)
 }
 
 const timeForRequest = 5 * time.Second

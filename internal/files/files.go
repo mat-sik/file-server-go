@@ -2,6 +2,8 @@ package files
 
 import (
 	"github.com/mat-sik/file-server-go/internal/envs"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -38,8 +40,8 @@ func SizeOf(f *os.File) (int, error) {
 	return int(stat.Size()), nil
 }
 
-func Close(f *os.File) {
+func LoggedClose(f io.Closer) {
 	if err := f.Close(); err != nil {
-		panic(err)
+		slog.Error(err.Error())
 	}
 }

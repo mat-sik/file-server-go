@@ -10,9 +10,26 @@ import (
 	"os"
 )
 
-func HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
-	path := files.BuildServerFilePath(req.FileName)
-	file, err := os.Open(path)
+type Handler struct {
+	files.Service
+}
+
+func NewHandler(fileService files.Service) Handler {
+	return Handler{Service: fileService}
+}
+
+func (h Handler) HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
+	fileHandle, ok := h.GetFile(req.FileName)
+	if !ok {
+		return GetFileResponse{
+			GetFileResponse: message.GetFileResponse{
+				Status: http.StatusNotFound,
+				Size:   0,
+			},
+		}, nil
+	}
+
+	readLockedFile, err := fileHandle.NewReadLockedFile()
 	if errors.Is(err, os.ErrNotExist) {
 		return GetFileResponse{
 			GetFileResponse: message.GetFileResponse{
@@ -24,8 +41,9 @@ func HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
 		return GetFileResponse{}, err
 	}
 
-	fileSize, err := files.SizeOf(file)
+	fileSize, err := files.SizeOf(readLockedFile.File)
 	if err != nil {
+		defer files.LoggedClose(&readLockedFile)
 		return GetFileResponse{}, err
 	}
 
@@ -34,27 +52,32 @@ func HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
 			Status: http.StatusOK,
 			Size:   fileSize,
 		},
-		File: file,
+		ReadLockedFile: readLockedFile,
 	}, nil
 }
 
 type GetFileResponse struct {
 	message.GetFileResponse
-	*os.File
+	files.ReadLockedFile
 }
 
-func HandlePutFileRequest(
+func (h Handler) HandlePutFileRequest(
 	ctx context.Context,
 	session netmsg.Session,
 	req message.PutFileRequest,
 ) (message.PutFileResponse, error) {
-	path := files.BuildServerFilePath(req.FileName)
-	file, err := os.Create(path)
-	if err != nil {
-		return message.PutFileResponse{}, err
+	saveFileFromNet := func(filename string) error {
+		file, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		defer files.LoggedClose(file)
+
+		return session.StreamFromNet(ctx, file, req.Size)
 	}
 
-	if err = session.StreamFromNet(ctx, file, req.Size); err != nil {
+	fileHandle := h.AddFile(req.FileName)
+	if err := fileHandle.ExecuteWriteOP(saveFileFromNet); err != nil {
 		return message.PutFileResponse{}, err
 	}
 
@@ -63,9 +86,8 @@ func HandlePutFileRequest(
 	}, nil
 }
 
-func HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
-	path := files.BuildServerFilePath(req.FileName)
-	err := os.Remove(path)
+func (h Handler) HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
+	err := h.RemoveFile(req.FileName)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.DeleteFileResponse{
 			Status: http.StatusNotFound,

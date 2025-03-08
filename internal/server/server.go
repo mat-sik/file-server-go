@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
+	"github.com/mat-sik/file-server-go/internal/server/request"
 	"io"
 	"log/slog"
 	"net"
@@ -49,7 +51,14 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	defer safeConnectionClose(conn)
 
 	session := netmsg.NewSession(conn)
-	handler := sessionHandler{Session: session}
+
+	fileService := files.NewService()
+	requestHandler := request.NewHandler(fileService)
+
+	handler := sessionHandler{
+		Session: session,
+		Handler: requestHandler,
+	}
 
 	var err error
 	for err == nil {
