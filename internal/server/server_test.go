@@ -30,14 +30,9 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	// when
-	go runServer(ctx, wg)
-	wg.Wait()
+	cancel := runServerBlockTillListening()
+	defer cancel()
 
 	// and when
 	webClient := getClient()
@@ -84,14 +79,9 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	// when
-	go runServer(ctx, wg)
-	wg.Wait()
+	cancel := runServerBlockTillListening()
+	defer cancel()
 
 	// and when
 	webClient := getClient()
@@ -114,14 +104,9 @@ func Test_shouldPutFileToServer(t *testing.T) {
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	createFile(clientFilePath, 1024*1024)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	// when
-	go runServer(ctx, wg)
-	wg.Wait()
+	cancel := runServerBlockTillListening()
+	defer cancel()
 
 	// and when
 	webClient := getClient()
@@ -144,14 +129,9 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	// when
-	go runServer(ctx, wg)
-	wg.Wait()
+	cancel := runServerBlockTillListening()
+	defer cancel()
 
 	// and when
 	webClient := getClient()
@@ -166,6 +146,17 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	if fileExists(serverFilePath) {
 		t.Fatalf("file exists, but should have been deleted")
 	}
+}
+
+func runServerBlockTillListening() context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go runServer(ctx, wg)
+	wg.Wait()
+
+	return cancel
 }
 
 func runServer(ctx context.Context, wg *sync.WaitGroup) {
