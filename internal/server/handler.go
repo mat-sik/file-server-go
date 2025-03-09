@@ -76,7 +76,7 @@ func (sh sessionHandler) streamFileResponse(
 	res request.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
-		return sh.SendMessage(res)
+		return sh.SendMessage(res.GetFileResponse)
 	}
 
 	defer files.LoggedClose(&res.ReadLockedFile)
