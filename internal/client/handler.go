@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"github.com/mat-sik/file-server-go/internal/client/ctxvalue"
 	"github.com/mat-sik/file-server-go/internal/client/response"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
@@ -20,8 +21,8 @@ func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	if req, ok := req.(message.GetFileRequest); ok {
-		ctx = contextWithFileName(ctx, req.Filename)
+	if req, ok := req.(message.FilenameGetter); ok {
+		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
 	}
 
 	res, err := sh.receiveResponse()
@@ -80,9 +81,9 @@ func (sh sessionHandler) handleResponse(ctx context.Context, res message.Respons
 	case message.GetFileResponse:
 		return sh.handleGetFileResponse(ctx, res)
 	case message.PutFileResponse:
-		response.HandlePutFileResponse(res)
+		response.HandlePutFileResponse(ctx, res)
 	case message.DeleteFileResponse:
-		response.HandleDeleteFileResponse(res)
+		response.HandleDeleteFileResponse(ctx, res)
 	default:
 		return errors.New("unexpected response type")
 	}
@@ -94,22 +95,11 @@ func (sh sessionHandler) handleGetFileResponse(
 	ctx context.Context,
 	res message.GetFileResponse,
 ) error {
-	filename, ok := filenameFromContext(ctx)
+	filename, ok := ctxvalue.FilenameFromContext(ctx)
 	if !ok {
 		return errors.New("file name not found in the context")
 	}
 	return response.HandelGetFileResponse(ctx, sh.Session, filename, res)
 }
-
-func contextWithFileName(ctx context.Context, filename string) context.Context {
-	return context.WithValue(ctx, filenameKey{}, filename)
-}
-
-func filenameFromContext(ctx context.Context) (string, bool) {
-	res, ok := ctx.Value(filenameKey{}).(string)
-	return res, ok
-}
-
-type filenameKey struct{}
 
 const timeForRequest = 5 * time.Second

@@ -75,3 +75,19 @@ func (_ PutFileResponse) isResponse() {
 
 func (_ DeleteFileResponse) isResponse() {
 }
+
+type FilenameGetter interface {
+	GetFilename() string
+}
+
+func (req GetFileRequest) GetFilename() string {
+	return req.Filename
+}
+
+func (req PutFileRequest) GetFilename() string {
+	return req.Filename
+}
+
+func (req DeleteFileRequest) GetFilename() string {
+	return req.Filename
+}
