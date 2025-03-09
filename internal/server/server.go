@@ -42,6 +42,17 @@ func run(ctx context.Context, listener net.Listener) error {
 	return connectionLoop(ctx, connCh, errCh)
 }
 
+func acceptConnections(listener net.Listener, connCh chan<- net.Conn, errCh chan<- error) {
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			errCh <- err
+			return
+		}
+		connCh <- conn
+	}
+}
+
 func connectionLoop(ctx context.Context, connCh <-chan net.Conn, errCh chan error) error {
 	for {
 		select {
@@ -55,17 +66,6 @@ func connectionLoop(ctx context.Context, connCh <-chan net.Conn, errCh chan erro
 		case <-ctx.Done():
 			return nil
 		}
-	}
-}
-
-func acceptConnections(listener net.Listener, connCh chan<- net.Conn, errCh chan<- error) {
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			errCh <- err
-			return
-		}
-		connCh <- conn
 	}
 }
 
