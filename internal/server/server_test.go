@@ -68,8 +68,10 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 	})
 	go runRequest(wg, func(webClient client.Client) error {
 		getReq := message.GetFileRequest{Filename: serverFilename2}
-		if err := webClient.Run(getReq); err != nil {
-			return err
+		for i := 0; i < 5; i++ {
+			if err := webClient.Run(getReq); err != nil {
+				return err
+			}
 		}
 		putReq := message.PutFileRequest{Filename: clientFilename1}
 		if err := webClient.Run(putReq); err != nil {
@@ -82,9 +84,11 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 		return nil
 	})
 	go runRequest(wg, func(webClient client.Client) error {
-		req := message.GetFileRequest{Filename: serverFilename2}
-		if err := webClient.Run(req); err != nil {
-			return err
+		getReq := message.GetFileRequest{Filename: serverFilename2}
+		for i := 0; i < 5; i++ {
+			if err := webClient.Run(getReq); err != nil {
+				return err
+			}
 		}
 		for i := 0; i < 5; i++ {
 			delReq := message.DeleteFileRequest{Filename: clientFilename1}
