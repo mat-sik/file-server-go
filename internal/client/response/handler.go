@@ -19,6 +19,7 @@ func HandelGetFileResponse(
 ) error {
 	if res.Status != http.StatusOK {
 		slog.Warn("GET file response:", "filename", filename, "status", res.Status)
+		return nil
 	}
 
 	if err := handleGetFileResponse(ctx, session, filename, res.Size); err != nil {
