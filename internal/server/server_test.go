@@ -25,7 +25,93 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func Test_foo(t *testing.T) {
+	// given
+	serverFilename1 := "serverFilename1"
+	serverPath1 := filepath.Join(testServerStoragePath, serverFilename1)
+	createFile(serverPath1, 1024*1024)
+
+	serverFilename2 := "serverFilename2"
+	serverPath2 := filepath.Join(testServerStoragePath, serverFilename2)
+	createFile(serverPath2, 1024*1024)
+
+	clientFilename1 := "clientFilename1"
+	clientPath1 := filepath.Join(testClientStoragePath, clientFilename1)
+	createFile(clientPath1, 1024*1024)
+
+	clientFilename2 := "clientFilename2"
+	clientPath2 := filepath.Join(testClientStoragePath, clientFilename2)
+	createFile(clientPath2, 1024*1024)
+
+	// when
+	cancel := runServerBlockTillListening()
+	defer cancel()
+
+	// and when
+	wg := &sync.WaitGroup{}
+	wg.Add(4)
+	go runRequest(wg, func(webClient client.Client) error {
+		req := message.GetFileRequest{Filename: serverFilename1}
+		for i := 0; i < 5; i++ {
+			if err := webClient.Run(req); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	go runRequest(wg, func(webClient client.Client) error {
+		req := message.DeleteFileRequest{Filename: serverFilename1}
+		if err := webClient.Run(req); err != nil {
+			return err
+		}
+		return nil
+	})
+	go runRequest(wg, func(webClient client.Client) error {
+		getReq := message.GetFileRequest{Filename: serverFilename2}
+		if err := webClient.Run(getReq); err != nil {
+			return err
+		}
+		putReq := message.PutFileRequest{Filename: clientFilename1}
+		if err := webClient.Run(putReq); err != nil {
+			return err
+		}
+		putReq = message.PutFileRequest{Filename: clientFilename2}
+		if err := webClient.Run(putReq); err != nil {
+			return err
+		}
+		return nil
+	})
+	go runRequest(wg, func(webClient client.Client) error {
+		req := message.GetFileRequest{Filename: serverFilename2}
+		if err := webClient.Run(req); err != nil {
+			return err
+		}
+		for i := 0; i < 5; i++ {
+			delReq := message.DeleteFileRequest{Filename: clientFilename1}
+			if err := webClient.Run(delReq); err != nil {
+				return err
+			}
+			delReq = message.DeleteFileRequest{Filename: clientFilename2}
+			if err := webClient.Run(delReq); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	wg.Wait()
+}
+
+func runRequest(wg *sync.WaitGroup, execRequest func(webClient client.Client) error) {
+	webClient := getClient()
+	if err := execRequest(webClient); err != nil {
+		panic(err)
+	}
+	wg.Done()
+}
+
 func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameConnection(t *testing.T) {
+	// given
 	filename := "threeStepsTest.txt"
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
