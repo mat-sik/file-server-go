@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func Test_foo(t *testing.T) {
+func Test_shouldPassRaceConditionTest(t *testing.T) {
 	// given
 	serverFilename1 := "serverFilename1"
 	serverPath1 := filepath.Join(testServerStoragePath, serverFilename1)
