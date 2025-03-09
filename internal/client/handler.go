@@ -21,7 +21,7 @@ func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request)
 	}
 
 	if req, ok := req.(message.GetFileRequest); ok {
-		ctx = contextWithFileName(ctx, req.FileName)
+		ctx = contextWithFileName(ctx, req.Filename)
 	}
 
 	res, err := sh.receiveResponse()
@@ -45,7 +45,7 @@ func (sh sessionHandler) deliverRequest(ctx context.Context, req message.Request
 }
 
 func (sh sessionHandler) streamRequest(ctx context.Context, req message.PutFileRequest) error {
-	path := files.BuildClientFilePath(req.FileName)
+	path := files.BuildClientFilePath(req.Filename)
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -94,22 +94,22 @@ func (sh sessionHandler) handleGetFileResponse(
 	ctx context.Context,
 	res message.GetFileResponse,
 ) error {
-	fileName, ok := fileNameFromContext(ctx)
+	filename, ok := filenameFromContext(ctx)
 	if !ok {
 		return errors.New("file name not found in the context")
 	}
-	return response.HandelGetFileResponse(ctx, sh.Session, fileName, res)
+	return response.HandelGetFileResponse(ctx, sh.Session, filename, res)
 }
 
-func contextWithFileName(ctx context.Context, fileName string) context.Context {
-	return context.WithValue(ctx, fileNameKey{}, fileName)
+func contextWithFileName(ctx context.Context, filename string) context.Context {
+	return context.WithValue(ctx, filenameKey{}, filename)
 }
 
-func fileNameFromContext(ctx context.Context) (string, bool) {
-	res, ok := ctx.Value(fileNameKey{}).(string)
+func filenameFromContext(ctx context.Context) (string, bool) {
+	res, ok := ctx.Value(filenameKey{}).(string)
 	return res, ok
 }
 
-type fileNameKey struct{}
+type filenameKey struct{}
 
 const timeForRequest = 5 * time.Second

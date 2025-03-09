@@ -1,7 +1,7 @@
 package message
 
 type GetFileRequest struct {
-	FileName string
+	Filename string
 }
 
 type GetFileResponse struct {
@@ -10,7 +10,7 @@ type GetFileResponse struct {
 }
 
 type PutFileRequest struct {
-	FileName string
+	Filename string
 	Size     int
 }
 
@@ -19,7 +19,7 @@ type PutFileResponse struct {
 }
 
 type DeleteFileRequest struct {
-	FileName string
+	Filename string
 }
 
 type DeleteFileResponse struct {

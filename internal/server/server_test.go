@@ -37,7 +37,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	// and when
 	webClient := getClient()
 
-	getFileReq := message.GetFileRequest{FileName: filename}
+	getFileReq := message.GetFileRequest{Filename: filename}
 	err := webClient.Run(getFileReq)
 
 	// then
@@ -50,7 +50,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	}
 
 	// and when
-	delFileReq := message.DeleteFileRequest{FileName: filename}
+	delFileReq := message.DeleteFileRequest{Filename: filename}
 	err = webClient.Run(delFileReq)
 
 	// then
@@ -62,7 +62,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	}
 
 	// and when
-	putFileReq := message.PutFileRequest{FileName: filename}
+	putFileReq := message.PutFileRequest{Filename: filename}
 	err = webClient.Run(putFileReq)
 
 	// then
@@ -75,6 +75,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 }
 
 func Test_shouldGetFileFromServer(t *testing.T) {
+	// given
 	filename := "getFileTest.txt"
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
@@ -86,7 +87,7 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 	// and when
 	webClient := getClient()
 
-	getFileReq := message.GetFileRequest{FileName: filename}
+	getFileReq := message.GetFileRequest{Filename: filename}
 	err := webClient.Run(getFileReq)
 
 	// then
@@ -100,6 +101,7 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 }
 
 func Test_shouldPutFileToServer(t *testing.T) {
+	// given
 	filename := "putFileTest.txt"
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	createFile(clientFilePath, 1024*1024)
@@ -111,7 +113,7 @@ func Test_shouldPutFileToServer(t *testing.T) {
 	// and when
 	webClient := getClient()
 
-	putFileReq := message.PutFileRequest{FileName: filename}
+	putFileReq := message.PutFileRequest{Filename: filename}
 	err := webClient.Run(putFileReq)
 
 	// then
@@ -125,6 +127,7 @@ func Test_shouldPutFileToServer(t *testing.T) {
 }
 
 func Test_shouldDeleteFileFromServer(t *testing.T) {
+	// given
 	filename := "deleteFileTest.txt"
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	createFile(serverFilePath, 1024*1024)
@@ -136,7 +139,7 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	// and when
 	webClient := getClient()
 
-	delFileReq := message.DeleteFileRequest{FileName: filename}
+	delFileReq := message.DeleteFileRequest{Filename: filename}
 	err := webClient.Run(delFileReq)
 
 	// then

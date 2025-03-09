@@ -15,7 +15,7 @@ message MessageWrapper {
 }
 
 message GetFileRequest {
-  optional string fileName = 1;
+  optional string filename = 1;
 }
 
 message GetFileResponse {
@@ -24,7 +24,7 @@ message GetFileResponse {
 }
 
 message PutFileRequest {
-  optional string fileName = 1;
+  optional string filename = 1;
   optional int64 size = 2;
 }
 
@@ -33,7 +33,7 @@ message PutFileResponse {
 }
 
 message DeleteFileRequest {
-  optional string fileName = 1;
+  optional string filename = 1;
 }
 
 message DeleteFileResponse {

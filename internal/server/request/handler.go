@@ -19,7 +19,7 @@ func NewHandler(fileService files.Service) Handler {
 }
 
 func (h Handler) HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
-	fileHandle, ok := h.GetFile(req.FileName)
+	fileHandle, ok := h.GetFile(req.Filename)
 	if !ok {
 		return GetFileResponse{
 			GetFileResponse: message.GetFileResponse{
@@ -76,7 +76,7 @@ func (h Handler) HandlePutFileRequest(
 		return session.StreamFromNet(ctx, file, req.Size)
 	}
 
-	fileHandle := h.AddFile(req.FileName)
+	fileHandle := h.AddFile(req.Filename)
 	if err := fileHandle.ExecuteWriteOP(saveFileFromNet); err != nil {
 		return message.PutFileResponse{}, err
 	}
@@ -87,7 +87,7 @@ func (h Handler) HandlePutFileRequest(
 }
 
 func (h Handler) HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
-	err := h.RemoveFile(req.FileName)
+	err := h.RemoveFile(req.Filename)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.DeleteFileResponse{
 			Status: http.StatusNotFound,

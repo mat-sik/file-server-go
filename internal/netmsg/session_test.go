@@ -12,11 +12,11 @@ func Test_should_SendMessage_And_ReceiveIt(t *testing.T) {
 		name    string
 		message message.Message
 	}{
-		{name: "PUT File Request", message: message.PutFileRequest{FileName: "foo.txt", Size: 404}},
+		{name: "PUT File Request", message: message.PutFileRequest{Filename: "foo.txt", Size: 404}},
 		{name: "PUT File Response", message: message.PutFileResponse{Status: 200}},
-		{name: "GET File Request", message: message.GetFileRequest{FileName: "foo.txt"}},
+		{name: "GET File Request", message: message.GetFileRequest{Filename: "foo.txt"}},
 		{name: "GET File Response", message: message.GetFileResponse{Status: 200, Size: 404}},
-		{name: "DELETE File Request", message: message.DeleteFileRequest{FileName: "foo.txt"}},
+		{name: "DELETE File Request", message: message.DeleteFileRequest{Filename: "foo.txt"}},
 		{name: "DELETE File Response", message: message.DeleteFileResponse{Status: 200}},
 	}
 

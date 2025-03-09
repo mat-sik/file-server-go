@@ -64,7 +64,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_GetFileRequest{
 				GetFileRequest: &netmsgpb.GetFileRequest{
-					FileName: &msg.FileName,
+					FileName: &msg.Filename,
 				},
 			},
 		}
@@ -84,7 +84,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_PutFileRequest{
 				PutFileRequest: &netmsgpb.PutFileRequest{
-					FileName: &msg.FileName,
+					FileName: &msg.Filename,
 					Size:     &size,
 				},
 			},
@@ -102,7 +102,7 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 		return netmsgpb.MessageWrapper{
 			Message: &netmsgpb.MessageWrapper_DeleteFileRequest{
 				DeleteFileRequest: &netmsgpb.DeleteFileRequest{
-					FileName: &msg.FileName,
+					FileName: &msg.Filename,
 				},
 			},
 		}
@@ -125,7 +125,7 @@ func fromProto(wrapper *netmsgpb.MessageWrapper) message.Message {
 	case *netmsgpb.MessageWrapper_GetFileRequest:
 		req := msg.GetFileRequest
 		return message.GetFileRequest{
-			FileName: req.GetFileName(),
+			Filename: req.GetFileName(),
 		}
 	case *netmsgpb.MessageWrapper_GetFileResponse:
 		req := msg.GetFileResponse
@@ -136,7 +136,7 @@ func fromProto(wrapper *netmsgpb.MessageWrapper) message.Message {
 	case *netmsgpb.MessageWrapper_PutFileRequest:
 		req := msg.PutFileRequest
 		return message.PutFileRequest{
-			FileName: req.GetFileName(),
+			Filename: req.GetFileName(),
 			Size:     int(req.GetSize()),
 		}
 	case *netmsgpb.MessageWrapper_PutFileResponse:
@@ -147,7 +147,7 @@ func fromProto(wrapper *netmsgpb.MessageWrapper) message.Message {
 	case *netmsgpb.MessageWrapper_DeleteFileRequest:
 		req := msg.DeleteFileRequest
 		return message.DeleteFileRequest{
-			FileName: req.GetFileName(),
+			Filename: req.GetFileName(),
 		}
 	case *netmsgpb.MessageWrapper_DeleteFileResponse:
 		req := msg.DeleteFileResponse

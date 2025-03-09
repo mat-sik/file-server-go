@@ -13,14 +13,14 @@ import (
 func HandelGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
-	fileName string,
+	filename string,
 	res message.GetFileResponse,
 ) error {
 	if res.Status != http.StatusOK {
 		slog.Warn("GET file response:", "status", res.Status)
 	}
 
-	if err := handleGetFileResponse(ctx, session, fileName, res.Size); err != nil {
+	if err := handleGetFileResponse(ctx, session, filename, res.Size); err != nil {
 		return err
 	}
 
@@ -31,10 +31,10 @@ func HandelGetFileResponse(
 func handleGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
-	fileName string,
+	filename string,
 	fileSize int,
 ) error {
-	path := files.BuildClientFilePath(fileName)
+	path := files.BuildClientFilePath(filename)
 	file, err := os.Create(path)
 	if err != nil {
 		return err

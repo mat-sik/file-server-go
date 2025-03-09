@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 )
 
-func BuildClientFilePath(fileName string) string {
-	return filepath.Join(envs.ClientStoragePath, fileName)
+func BuildClientFilePath(filename string) string {
+	return filepath.Join(envs.ClientStoragePath, filename)
 }
 
-func buildServerFilePath(fileName string) string {
-	return filepath.Join(envs.ServerStoragePath, fileName)
+func buildServerFilePath(filename string) string {
+	return filepath.Join(envs.ServerStoragePath, filename)
 }
 
 func getServerStoredFilenames() []string {
