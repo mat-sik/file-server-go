@@ -25,6 +25,60 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameConnection(t *testing.T) {
+	filename := "threeStepsTest.txt"
+	serverFilePath := filepath.Join(testServerStoragePath, filename)
+	createFile(serverFilePath, 1024*1024)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	// when
+	go runServer(ctx, wg)
+	wg.Wait()
+
+	// and when
+	webClient := getClient()
+
+	getFileReq := message.GetFileRequest{FileName: filename}
+	err := webClient.Run(getFileReq)
+
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+	clientFilePath := filepath.Join(testClientStoragePath, filename)
+	if !filesEqual(clientFilePath, serverFilePath) {
+		t.Fatalf("file not equal")
+	}
+
+	// and when
+	delFileReq := message.DeleteFileRequest{FileName: filename}
+	err = webClient.Run(delFileReq)
+
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fileExists(serverFilePath) {
+		t.Fatalf("file exists, but should have been deleted")
+	}
+
+	// and when
+	putFileReq := message.PutFileRequest{FileName: filename}
+	err = webClient.Run(putFileReq)
+
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filesEqual(serverFilePath, clientFilePath) {
+		t.Fatalf("file not equal")
+	}
+}
+
 func Test_shouldGetFileFromServer(t *testing.T) {
 	filename := "getFileTest.txt"
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
@@ -42,8 +96,8 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 	// and when
 	webClient := getClient()
 
-	putFileReq := message.GetFileRequest{FileName: filename}
-	err := webClient.Run(putFileReq)
+	getFileReq := message.GetFileRequest{FileName: filename}
+	err := webClient.Run(getFileReq)
 
 	// then
 	if err != nil {
@@ -102,8 +156,8 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	// and when
 	webClient := getClient()
 
-	putFileReq := message.DeleteFileRequest{FileName: filename}
-	err := webClient.Run(putFileReq)
+	delFileReq := message.DeleteFileRequest{FileName: filename}
+	err := webClient.Run(delFileReq)
 
 	// then
 	if err != nil {
