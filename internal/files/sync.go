@@ -19,7 +19,10 @@ func (s *Service) AddFile(filename string) FileHandle {
 func (s *Service) GetFile(filename string) (FileHandle, bool) {
 	path := buildServerFilePath(filename)
 	fileHandle, ok := s.files.Load(path)
-	return fileHandle.(FileHandle), ok
+	if !ok {
+		return FileHandle{}, false
+	}
+	return fileHandle.(FileHandle), true
 }
 
 func (s *Service) RemoveFile(filename string) error {
