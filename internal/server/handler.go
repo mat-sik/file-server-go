@@ -73,10 +73,7 @@ func (sh sessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	}
 }
 
-func (sh sessionHandler) streamFileResponse(
-	ctx context.Context,
-	res request.GetFileResponse,
-) error {
+func (sh sessionHandler) streamFileResponse(ctx context.Context, res request.GetFileResponse) error {
 	if res.Status != http.StatusOK {
 		return sh.SendMessage(res.GetFileResponse)
 	}
