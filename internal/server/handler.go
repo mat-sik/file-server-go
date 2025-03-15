@@ -54,6 +54,8 @@ func (sh sessionHandler) routeRequest(ctx context.Context, req message.Request) 
 		return sh.HandlePutFileRequest(ctx, sh.Session, req)
 	case message.DeleteFileRequest:
 		return sh.HandleDeleteFileRequest(req)
+	case message.GetFilenamesRequest:
+		return sh.HandleGetFilenamesRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
 	}

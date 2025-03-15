@@ -8,6 +8,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/netmsg"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 type Handler struct {
@@ -98,5 +99,26 @@ func (h Handler) HandleDeleteFileRequest(req message.DeleteFileRequest) (message
 	}
 	return message.DeleteFileResponse{
 		Status: http.StatusOK,
+	}, nil
+}
+
+func (h Handler) HandleGetFilenamesRequest(req message.GetFilenamesRequest) (message.GetFilenamesResponse, error) {
+	pattern, err := regexp.Compile(req.MatchRegex)
+	if err != nil {
+		return message.GetFilenamesResponse{
+			Status: http.StatusBadRequest,
+		}, nil
+	}
+
+	var filteredFilenames []string
+	for _, filename := range h.GetAllFilenames() {
+		if pattern.MatchString(filename) {
+			filteredFilenames = append(filteredFilenames, filename)
+		}
+	}
+
+	return message.GetFilenamesResponse{
+		Status:    http.StatusOK,
+		Filenames: filteredFilenames,
 	}, nil
 }
