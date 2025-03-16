@@ -21,12 +21,7 @@ func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request)
 		return err
 	}
 
-	if req, ok := req.(message.FilenameGetter); ok {
-		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
-	}
-	if req, ok := req.(message.GetFilenamesRequest); ok {
-		ctx = ctxvalue.ContextWithPattern(ctx, req.MatchRegex)
-	}
+	ctx = setValuesInContext(ctx, req)
 
 	res, err := sh.receiveResponse()
 	if err != nil {
@@ -34,6 +29,16 @@ func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request)
 	}
 
 	return sh.handleResponse(ctx, res)
+}
+
+func setValuesInContext(ctx context.Context, req message.Request) context.Context {
+	if req, ok := req.(message.FilenameGetter); ok {
+		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
+	}
+	if req, ok := req.(message.GetFilenamesRequest); ok {
+		ctx = ctxvalue.ContextWithPattern(ctx, req.MatchRegex)
+	}
+	return ctx
 }
 
 func (sh sessionHandler) deliverRequest(ctx context.Context, req message.Request) error {
