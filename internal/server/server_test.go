@@ -59,11 +59,15 @@ func Test_shouldReturnAllMatchedFilenames(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectedFilenames := []string{serverFilename1, serverFilename2, serverFilename4}
+	validateGetFilenamesResponse(t, res, expectedFilenames)
+}
+
+func validateGetFilenamesResponse(t *testing.T, res message.Response, expectedFilenames []string) {
 	if res, ok := res.(message.GetFilenamesResponse); ok {
 		if res.Status != 200 {
 			t.Fatalf("got %v want %v", res.Status, 200)
 		}
-		expectedFilenames := []string{serverFilename1, serverFilename2, serverFilename4}
 		sort.Strings(expectedFilenames)
 		sort.Strings(res.Filenames)
 		if !reflect.DeepEqual(res.Filenames, expectedFilenames) {
@@ -183,13 +187,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res, ok := res.(message.GetFileResponse); ok {
-		if res.Status != 200 {
-			t.Fatalf("got %v want %v", res.Status, 200)
-		}
-	} else {
-		t.Fatalf("got %T want message.GetFileResponse", res)
-	}
+	validateGetFileRes(t, res)
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	if !filesEqual(clientFilePath, serverFilePath) {
 		t.Fatalf("file not equal")
@@ -203,13 +201,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res, ok := res.(message.DeleteFileResponse); ok {
-		if res.Status != 200 {
-			t.Fatalf("got %v want %v", res.Status, 200)
-		}
-	} else {
-		t.Fatalf("got %T want message.DeleteFileResponse", res)
-	}
+	validateDelFileRes(t, res)
 	if fileExists(serverFilePath) {
 		t.Fatalf("file exists, but should have been deleted")
 	}
@@ -222,13 +214,7 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res, ok := res.(message.PutFileResponse); ok {
-		if res.Status != 201 {
-			t.Fatalf("got %v want %v", res.Status, 201)
-		}
-	} else {
-		t.Fatalf("got %T want message.PutFileResponse", res)
-	}
+	validatePutFileRes(t, res)
 	if !filesEqual(serverFilePath, clientFilePath) {
 		t.Fatalf("file not equal")
 	}
@@ -254,13 +240,7 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res, ok := res.(message.GetFileResponse); ok {
-		if res.Status != 200 {
-			t.Fatalf("got %v want %v", res.Status, 200)
-		}
-	} else {
-		t.Fatalf("got %T want message.GetFileResponse", res)
-	}
+	validateGetFileRes(t, res)
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	if !filesEqual(clientFilePath, serverFilePath) {
 		t.Fatalf("file not equal")
@@ -287,13 +267,7 @@ func Test_shouldPutFileToServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res, ok := res.(message.PutFileResponse); ok {
-		if res.Status != 201 {
-			t.Fatalf("got %v want %v", res.Status, 201)
-		}
-	} else {
-		t.Fatalf("got %T want message.PutFileResponse", res)
-	}
+	validatePutFileRes(t, res)
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	if !filesEqual(serverFilePath, clientFilePath) {
 		t.Fatalf("file not equal")
@@ -320,15 +294,39 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	validateDelFileRes(t, res)
+	if fileExists(serverFilePath) {
+		t.Fatalf("file exists, but should have been deleted")
+	}
+}
+
+func validateGetFileRes(t *testing.T, res message.Response) {
+	if res, ok := res.(message.GetFileResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+	} else {
+		t.Fatalf("got %T want message.GetFileResponse", res)
+	}
+}
+
+func validatePutFileRes(t *testing.T, res message.Response) {
+	if res, ok := res.(message.PutFileResponse); ok {
+		if res.Status != 201 {
+			t.Fatalf("got %v want %v", res.Status, 201)
+		}
+	} else {
+		t.Fatalf("got %T want message.PutFileResponse", res)
+	}
+}
+
+func validateDelFileRes(t *testing.T, res message.Response) {
 	if res, ok := res.(message.DeleteFileResponse); ok {
 		if res.Status != 200 {
 			t.Fatalf("got %v want %v", res.Status, 200)
 		}
 	} else {
 		t.Fatalf("got %T want message.DeleteFileResponse", res)
-	}
-	if fileExists(serverFilePath) {
-		t.Fatalf("file exists, but should have been deleted")
 	}
 }
 
