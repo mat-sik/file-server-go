@@ -2,6 +2,7 @@ package files
 
 import (
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -37,6 +38,16 @@ func (s *Service) RemoveFile(filename string) error {
 	}
 	s.files.Delete(path)
 	return nil
+}
+
+func (s *Service) GetAllFilenames() []string {
+	var filenames []string
+	s.files.Range(func(key, value interface{}) bool {
+		path := key.(string)
+		filenames = append(filenames, filepath.Base(path))
+		return true
+	})
+	return filenames
 }
 
 func NewService() Service {

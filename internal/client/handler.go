@@ -16,21 +16,33 @@ type sessionHandler struct {
 	netmsg.Session
 }
 
-func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) error {
+func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) (message.Response, error) {
 	if err := sh.deliverRequest(ctx, req); err != nil {
-		return err
+		return nil, err
 	}
 
-	if req, ok := req.(message.FilenameGetter); ok {
-		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
-	}
+	ctx = setValuesInContext(ctx, req)
 
 	res, err := sh.receiveResponse()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return sh.handleResponse(ctx, res)
+	if err = sh.handleResponse(ctx, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func setValuesInContext(ctx context.Context, req message.Request) context.Context {
+	if req, ok := req.(message.FilenameGetter); ok {
+		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
+	}
+	if req, ok := req.(message.GetFilenamesRequest); ok {
+		ctx = ctxvalue.ContextWithPattern(ctx, req.MatchRegex)
+	}
+	return ctx
 }
 
 func (sh sessionHandler) deliverRequest(ctx context.Context, req message.Request) error {
@@ -84,6 +96,8 @@ func (sh sessionHandler) handleResponse(ctx context.Context, res message.Respons
 		response.HandlePutFileResponse(ctx, res)
 	case message.DeleteFileResponse:
 		response.HandleDeleteFileResponse(ctx, res)
+	case message.GetFilenamesResponse:
+		response.HandleGetFilenamesResponse(ctx, res)
 	default:
 		return errors.New("unexpected response type")
 	}

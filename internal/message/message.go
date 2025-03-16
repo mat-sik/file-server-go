@@ -26,6 +26,15 @@ type DeleteFileResponse struct {
 	Status int
 }
 
+type GetFilenamesRequest struct {
+	MatchRegex string
+}
+
+type GetFilenamesResponse struct {
+	Status    int
+	Filenames []string
+}
+
 type Message interface {
 	isMessage()
 }
@@ -48,6 +57,12 @@ func (_ DeleteFileRequest) isMessage() {
 func (_ DeleteFileResponse) isMessage() {
 }
 
+func (_ GetFilenamesRequest) isMessage() {
+}
+
+func (_ GetFilenamesResponse) isMessage() {
+}
+
 type Request interface {
 	isMessage()
 	isRequest()
@@ -62,6 +77,9 @@ func (_ PutFileRequest) isRequest() {
 func (_ DeleteFileRequest) isRequest() {
 }
 
+func (_ GetFilenamesRequest) isRequest() {
+}
+
 type Response interface {
 	isMessage()
 	isResponse()
@@ -74,6 +92,9 @@ func (_ PutFileResponse) isResponse() {
 }
 
 func (_ DeleteFileResponse) isResponse() {
+}
+
+func (_ GetFilenamesResponse) isResponse() {
 }
 
 type FilenameGetter interface {

@@ -25,7 +25,7 @@ func NewClient(addr string) (Client, error) {
 	}, nil
 }
 
-func (c Client) Run(req message.Request) error {
+func (c Client) Run(req message.Request) (message.Response, error) {
 	ctx := context.Background()
 
 	return c.sessionHandler.handleRequest(ctx, req)

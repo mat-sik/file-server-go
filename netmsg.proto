@@ -11,6 +11,8 @@ message MessageWrapper {
     PutFileResponse put_file_response = 4;
     DeleteFileRequest delete_file_request = 5;
     DeleteFileResponse delete_file_response = 6;
+    GetFilenamesRequest get_filenames_request = 7;
+    GetFilenamesResponse get_filenames_response = 8;
   }
 }
 
@@ -38,4 +40,13 @@ message DeleteFileRequest {
 
 message DeleteFileResponse {
   optional int32 status = 1;
+}
+
+message GetFilenamesRequest {
+  optional string matchRegex = 1;
+}
+
+message GetFilenamesResponse {
+  optional int32 status = 1;
+  repeated string filename = 2;
 }

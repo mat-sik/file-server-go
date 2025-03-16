@@ -115,6 +115,24 @@ func toProto(msg message.Message) netmsgpb.MessageWrapper {
 				},
 			},
 		}
+	case message.GetFilenamesRequest:
+		return netmsgpb.MessageWrapper{
+			Message: &netmsgpb.MessageWrapper_GetFilenamesRequest{
+				GetFilenamesRequest: &netmsgpb.GetFilenamesRequest{
+					MatchRegex: &msg.MatchRegex,
+				},
+			},
+		}
+	case message.GetFilenamesResponse:
+		status := int32(msg.Status)
+		return netmsgpb.MessageWrapper{
+			Message: &netmsgpb.MessageWrapper_GetFilenamesResponse{
+				GetFilenamesResponse: &netmsgpb.GetFilenamesResponse{
+					Status:   &status,
+					Filename: msg.Filenames,
+				},
+			},
+		}
 	default:
 		panic(fmt.Sprintf("unexpected message type %T", msg))
 	}
@@ -153,6 +171,17 @@ func fromProto(wrapper *netmsgpb.MessageWrapper) message.Message {
 		req := msg.DeleteFileResponse
 		return message.DeleteFileResponse{
 			Status: int(req.GetStatus()),
+		}
+	case *netmsgpb.MessageWrapper_GetFilenamesRequest:
+		req := msg.GetFilenamesRequest
+		return message.GetFilenamesRequest{
+			MatchRegex: req.GetMatchRegex(),
+		}
+	case *netmsgpb.MessageWrapper_GetFilenamesResponse:
+		req := msg.GetFilenamesResponse
+		return message.GetFilenamesResponse{
+			Status:    int(req.GetStatus()),
+			Filenames: req.GetFilename(),
 		}
 	default:
 		panic(fmt.Sprintf("unexpected message type %T", msg))

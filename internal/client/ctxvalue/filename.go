@@ -11,4 +11,14 @@ func FilenameFromContext(ctx context.Context) (string, bool) {
 	return res, ok
 }
 
+func ContextWithPattern(ctx context.Context, pattern string) context.Context {
+	return context.WithValue(ctx, patternKey{}, pattern)
+}
+
+func PatternFromContext(ctx context.Context) (string, bool) {
+	res, ok := ctx.Value(patternKey{}).(string)
+	return res, ok
+}
+
 type filenameKey struct{}
+type patternKey struct{}
