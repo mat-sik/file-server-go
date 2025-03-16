@@ -45,28 +45,64 @@ func Test_shouldReturnAllMatchedFilenames(t *testing.T) {
 	serverPath4 := filepath.Join(testServerStoragePath, serverFilename4)
 	createFile(serverPath4, 1024*1024)
 
-	// when
 	cancel := runServerBlockTillListening()
 	defer cancel()
 
-	// and when
 	webClient := getClient()
 
-	getFilenamesReq := message.GetFilenamesRequest{MatchRegex: ".*A.*"}
-	res, err := webClient.Run(getFilenamesReq)
-
-	// then
-	if err != nil {
-		t.Fatal(err)
+	testCases := []struct {
+		name              string
+		request           message.Request
+		expectedStatus    int
+		expectedFilenames []string
+	}{
+		{
+			name:              "Should match files that have A",
+			request:           message.GetFilenamesRequest{MatchRegex: ".*A.*"},
+			expectedStatus:    200,
+			expectedFilenames: []string{serverFilename1, serverFilename2, serverFilename4},
+		},
+		{
+			name:              "Should match files that have B",
+			request:           message.GetFilenamesRequest{MatchRegex: ".*B.*"},
+			expectedStatus:    200,
+			expectedFilenames: []string{serverFilename3},
+		},
+		{
+			name:              "Should match no files",
+			request:           message.GetFilenamesRequest{MatchRegex: ".*X.*"},
+			expectedStatus:    200,
+			expectedFilenames: []string{},
+		},
+		{
+			name:              "Should return bad request",
+			request:           message.GetFilenamesRequest{MatchRegex: "[a-z"},
+			expectedStatus:    400,
+			expectedFilenames: nil,
+		},
 	}
-	expectedFilenames := []string{serverFilename1, serverFilename2, serverFilename4}
-	validateGetFilenamesResponse(t, res, expectedFilenames)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			res, err := webClient.Run(tc.request)
+
+			// then
+			if err != nil {
+				t.Fatal(err)
+			}
+			validateGetFilenamesRes(t, res, tc.expectedStatus, tc.expectedFilenames)
+		})
+	}
 }
 
-func validateGetFilenamesResponse(t *testing.T, res message.Response, expectedFilenames []string) {
+func validateGetFilenamesRes(t *testing.T, res message.Response, expectedStatus int, expectedFilenames []string) {
 	if res, ok := res.(message.GetFilenamesResponse); ok {
-		if res.Status != 200 {
-			t.Fatalf("got %v want %v", res.Status, 200)
+		if res.Status != expectedStatus {
+			t.Fatalf("got %v want %v", res.Status, expectedStatus)
+		}
+		if len(res.Filenames) == 0 && len(expectedFilenames) == 0 {
+			return
 		}
 		sort.Strings(expectedFilenames)
 		sort.Strings(res.Filenames)
