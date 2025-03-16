@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func Test_shouldReturnedAllStoredFilenames(t *testing.T) {
+func Test_shouldReturnAllMatchedFilenames(t *testing.T) {
 	// given
 	serverFilename1 := "serverFilenameA"
 	serverPath1 := filepath.Join(testServerStoragePath, serverFilename1)
