@@ -25,6 +25,40 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func Test_shouldReturnedAllStoredFilenames(t *testing.T) {
+	// given
+	serverFilename1 := "serverFilenameA"
+	serverPath1 := filepath.Join(testServerStoragePath, serverFilename1)
+	createFile(serverPath1, 1024*1024)
+
+	serverFilename2 := "serverFilenameAA"
+	serverPath2 := filepath.Join(testServerStoragePath, serverFilename2)
+	createFile(serverPath2, 1024*1024)
+
+	serverFilename3 := "serverFilenameBB"
+	serverPath3 := filepath.Join(testServerStoragePath, serverFilename3)
+	createFile(serverPath3, 1024*1024)
+
+	serverFilename4 := "serverFilenameAC"
+	serverPath4 := filepath.Join(testServerStoragePath, serverFilename4)
+	createFile(serverPath4, 1024*1024)
+
+	// when
+	cancel := runServerBlockTillListening()
+	defer cancel()
+
+	// and when
+	webClient := getClient()
+
+	getFilenamesReq := message.GetFilenamesRequest{MatchRegex: ".*A.*"}
+	err := webClient.Run(getFilenamesReq)
+
+	// then
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_shouldPassRaceConditionTest(t *testing.T) {
 	// given
 	serverFilename1 := "serverFilename1"

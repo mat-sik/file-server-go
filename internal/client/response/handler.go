@@ -54,6 +54,23 @@ func HandleDeleteFileResponse(ctx context.Context, res message.DeleteFileRespons
 	slog.Info("DELETE file response:", "filename", filename, "status", res.Status)
 }
 
+func HandleGetFilenamesResponse(ctx context.Context, res message.GetFilenamesResponse) {
+	pattern := patternFromContext(ctx)
+	if res.Status != http.StatusOK {
+		slog.Warn("GET filenames response:", "pattern", pattern, "status", res.Status)
+		return
+	}
+	slog.Info("GET filenames response:", "filenames", res.Filenames, "pattern", pattern, "status", res.Status)
+}
+
+func patternFromContext(ctx context.Context) string {
+	pattern, ok := ctxvalue.PatternFromContext(ctx)
+	if !ok {
+		panic("could not get pattern from context")
+	}
+	return pattern
+}
+
 func filenameFromContext(ctx context.Context) string {
 	filename, ok := ctxvalue.FilenameFromContext(ctx)
 	if !ok {

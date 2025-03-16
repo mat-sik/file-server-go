@@ -24,6 +24,9 @@ func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request)
 	if req, ok := req.(message.FilenameGetter); ok {
 		ctx = ctxvalue.ContextWithFileName(ctx, req.GetFilename())
 	}
+	if req, ok := req.(message.GetFilenamesRequest); ok {
+		ctx = ctxvalue.ContextWithPattern(ctx, req.MatchRegex)
+	}
 
 	res, err := sh.receiveResponse()
 	if err != nil {
@@ -84,6 +87,8 @@ func (sh sessionHandler) handleResponse(ctx context.Context, res message.Respons
 		response.HandlePutFileResponse(ctx, res)
 	case message.DeleteFileResponse:
 		response.HandleDeleteFileResponse(ctx, res)
+	case message.GetFilenamesResponse:
+		response.HandleGetFilenamesResponse(ctx, res)
 	default:
 		return errors.New("unexpected response type")
 	}
