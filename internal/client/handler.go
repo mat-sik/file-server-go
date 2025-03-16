@@ -16,19 +16,23 @@ type sessionHandler struct {
 	netmsg.Session
 }
 
-func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) error {
+func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) (message.Response, error) {
 	if err := sh.deliverRequest(ctx, req); err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx = setValuesInContext(ctx, req)
 
 	res, err := sh.receiveResponse()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return sh.handleResponse(ctx, res)
+	if err = sh.handleResponse(ctx, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func setValuesInContext(ctx context.Context, req message.Request) context.Context {

@@ -13,6 +13,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"sync"
 	"testing"
 )
@@ -51,11 +53,24 @@ func Test_shouldReturnAllMatchedFilenames(t *testing.T) {
 	webClient := getClient()
 
 	getFilenamesReq := message.GetFilenamesRequest{MatchRegex: ".*A.*"}
-	err := webClient.Run(getFilenamesReq)
+	res, err := webClient.Run(getFilenamesReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.GetFilenamesResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+		expectedFilenames := []string{serverFilename1, serverFilename2, serverFilename4}
+		sort.Strings(expectedFilenames)
+		sort.Strings(res.Filenames)
+		if !reflect.DeepEqual(res.Filenames, expectedFilenames) {
+			t.Fatalf("got %v want %v", res.Filenames, expectedFilenames)
+		}
+	} else {
+		t.Fatalf("got %T want message.GetFilenamesResponse", res)
 	}
 }
 
@@ -87,7 +102,7 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 	go runRequest(wg, func(webClient client.Client) error {
 		req := message.GetFileRequest{Filename: serverFilename1}
 		for i := 0; i < 5; i++ {
-			if err := webClient.Run(req); err != nil {
+			if _, err := webClient.Run(req); err != nil {
 				return err
 			}
 		}
@@ -95,7 +110,7 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 	})
 	go runRequest(wg, func(webClient client.Client) error {
 		req := message.DeleteFileRequest{Filename: serverFilename1}
-		if err := webClient.Run(req); err != nil {
+		if _, err := webClient.Run(req); err != nil {
 			return err
 		}
 		return nil
@@ -103,16 +118,16 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 	go runRequest(wg, func(webClient client.Client) error {
 		getReq := message.GetFileRequest{Filename: serverFilename2}
 		for i := 0; i < 5; i++ {
-			if err := webClient.Run(getReq); err != nil {
+			if _, err := webClient.Run(getReq); err != nil {
 				return err
 			}
 		}
 		putReq := message.PutFileRequest{Filename: clientFilename1}
-		if err := webClient.Run(putReq); err != nil {
+		if _, err := webClient.Run(putReq); err != nil {
 			return err
 		}
 		putReq = message.PutFileRequest{Filename: clientFilename2}
-		if err := webClient.Run(putReq); err != nil {
+		if _, err := webClient.Run(putReq); err != nil {
 			return err
 		}
 		return nil
@@ -120,17 +135,17 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 	go runRequest(wg, func(webClient client.Client) error {
 		getReq := message.GetFileRequest{Filename: serverFilename2}
 		for i := 0; i < 5; i++ {
-			if err := webClient.Run(getReq); err != nil {
+			if _, err := webClient.Run(getReq); err != nil {
 				return err
 			}
 		}
 		for i := 0; i < 5; i++ {
 			delReq := message.DeleteFileRequest{Filename: clientFilename1}
-			if err := webClient.Run(delReq); err != nil {
+			if _, err := webClient.Run(delReq); err != nil {
 				return err
 			}
 			delReq = message.DeleteFileRequest{Filename: clientFilename2}
-			if err := webClient.Run(delReq); err != nil {
+			if _, err := webClient.Run(delReq); err != nil {
 				return err
 			}
 		}
@@ -162,11 +177,18 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 	webClient := getClient()
 
 	getFileReq := message.GetFileRequest{Filename: filename}
-	err := webClient.Run(getFileReq)
+	res, err := webClient.Run(getFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.GetFileResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+	} else {
+		t.Fatalf("got %T want message.GetFileResponse", res)
 	}
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	if !filesEqual(clientFilePath, serverFilePath) {
@@ -175,11 +197,18 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 
 	// and when
 	delFileReq := message.DeleteFileRequest{Filename: filename}
-	err = webClient.Run(delFileReq)
+	res, err = webClient.Run(delFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.DeleteFileResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+	} else {
+		t.Fatalf("got %T want message.DeleteFileResponse", res)
 	}
 	if fileExists(serverFilePath) {
 		t.Fatalf("file exists, but should have been deleted")
@@ -187,11 +216,18 @@ func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameCon
 
 	// and when
 	putFileReq := message.PutFileRequest{Filename: filename}
-	err = webClient.Run(putFileReq)
+	res, err = webClient.Run(putFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.PutFileResponse); ok {
+		if res.Status != 201 {
+			t.Fatalf("got %v want %v", res.Status, 201)
+		}
+	} else {
+		t.Fatalf("got %T want message.PutFileResponse", res)
 	}
 	if !filesEqual(serverFilePath, clientFilePath) {
 		t.Fatalf("file not equal")
@@ -212,11 +248,18 @@ func Test_shouldGetFileFromServer(t *testing.T) {
 	webClient := getClient()
 
 	getFileReq := message.GetFileRequest{Filename: filename}
-	err := webClient.Run(getFileReq)
+	res, err := webClient.Run(getFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.GetFileResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+	} else {
+		t.Fatalf("got %T want message.GetFileResponse", res)
 	}
 	clientFilePath := filepath.Join(testClientStoragePath, filename)
 	if !filesEqual(clientFilePath, serverFilePath) {
@@ -238,11 +281,18 @@ func Test_shouldPutFileToServer(t *testing.T) {
 	webClient := getClient()
 
 	putFileReq := message.PutFileRequest{Filename: filename}
-	err := webClient.Run(putFileReq)
+	res, err := webClient.Run(putFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.PutFileResponse); ok {
+		if res.Status != 201 {
+			t.Fatalf("got %v want %v", res.Status, 201)
+		}
+	} else {
+		t.Fatalf("got %T want message.PutFileResponse", res)
 	}
 	serverFilePath := filepath.Join(testServerStoragePath, filename)
 	if !filesEqual(serverFilePath, clientFilePath) {
@@ -264,11 +314,18 @@ func Test_shouldDeleteFileFromServer(t *testing.T) {
 	webClient := getClient()
 
 	delFileReq := message.DeleteFileRequest{Filename: filename}
-	err := webClient.Run(delFileReq)
+	res, err := webClient.Run(delFileReq)
 
 	// then
 	if err != nil {
 		t.Fatal(err)
+	}
+	if res, ok := res.(message.DeleteFileResponse); ok {
+		if res.Status != 200 {
+			t.Fatalf("got %v want %v", res.Status, 200)
+		}
+	} else {
+		t.Fatalf("got %T want message.DeleteFileResponse", res)
 	}
 	if fileExists(serverFilePath) {
 		t.Fatalf("file exists, but should have been deleted")

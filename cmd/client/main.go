@@ -14,21 +14,21 @@ func main() {
 
 	getFileReq := message.GetFileRequest{Filename: "foo.txt"}
 
-	err = webClient.Run(getFileReq)
+	_, err = webClient.Run(getFileReq)
 	if err != nil {
 		panic(err)
 	}
 
 	delFileReq := message.DeleteFileRequest{Filename: "foo.txt"}
 
-	err = webClient.Run(delFileReq)
+	_, err = webClient.Run(delFileReq)
 	if err != nil {
 		panic(err)
 	}
 
 	putFileReq := message.PutFileRequest{Filename: "foo.txt"}
 
-	err = webClient.Run(putFileReq)
+	_, err = webClient.Run(putFileReq)
 	if err != nil {
 		panic(err)
 	}
