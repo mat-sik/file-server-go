@@ -6,14 +6,13 @@ import (
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
-	"github.com/mat-sik/file-server-go/internal/server/request"
 	"net/http"
 	"time"
 )
 
 type sessionHandler struct {
 	netmsg.Session
-	request.Handler
+	handler
 }
 
 func (sh sessionHandler) handleRequest(ctx context.Context) error {
@@ -49,13 +48,13 @@ func (sh sessionHandler) routeRequest(ctx context.Context, req message.Request) 
 
 	switch req := req.(type) {
 	case message.GetFileRequest:
-		return sh.HandleGetFileRequest(req)
+		return sh.handleGetFileRequest(req)
 	case message.PutFileRequest:
-		return sh.HandlePutFileRequest(ctx, sh.Session, req)
+		return sh.handlePutFileRequest(ctx, sh.Session, req)
 	case message.DeleteFileRequest:
-		return sh.HandleDeleteFileRequest(req)
+		return sh.handleDeleteFileRequest(req)
 	case message.GetFilenamesRequest:
-		return sh.HandleGetFilenamesRequest(req)
+		return sh.handleGetFilenamesRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
 	}
@@ -66,14 +65,14 @@ func (sh sessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	defer cancel()
 
 	switch res := res.(type) {
-	case request.GetFileResponse:
+	case getFileResponse:
 		return sh.streamFileResponse(ctx, res)
 	default:
 		return sh.SendMessage(res)
 	}
 }
 
-func (sh sessionHandler) streamFileResponse(ctx context.Context, res request.GetFileResponse) error {
+func (sh sessionHandler) streamFileResponse(ctx context.Context, res getFileResponse) error {
 	if res.Status != http.StatusOK {
 		return sh.SendMessage(res.GetFileResponse)
 	}

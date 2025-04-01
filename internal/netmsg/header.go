@@ -1,15 +1,15 @@
-package header
+package netmsg
 
 import (
 	"encoding/binary"
 	"errors"
 )
 
-type Header struct {
+type header struct {
 	PayloadSize uint32
 }
 
-func EncodeHeader(header Header, buffer []byte) error {
+func encodeHeader(header header, buffer []byte) error {
 	if err := validateHeaderBufferSize(buffer, uint32ByteSize); err != nil {
 		return err
 	}
@@ -17,14 +17,14 @@ func EncodeHeader(header Header, buffer []byte) error {
 	return nil
 }
 
-func DecodeHeader(buffer []byte) (Header, error) {
+func decodeHeader(buffer []byte) (header, error) {
 	if len(buffer) < Size {
-		return Header{}, errors.New("buffer has not enough bytes to decode header")
+		return header{}, errors.New("buffer has not enough bytes to decode header")
 	}
 	uint32ByteSlice := buffer[:uint32ByteSize]
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 
-	return Header{
+	return header{
 		PayloadSize: payloadSize,
 	}, nil
 }

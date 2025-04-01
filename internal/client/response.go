@@ -1,8 +1,7 @@
-package response
+package client
 
 import (
 	"context"
-	"github.com/mat-sik/file-server-go/internal/client/ctxvalue"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
@@ -11,7 +10,7 @@ import (
 	"os"
 )
 
-func HandelGetFileResponse(
+func handelGetFileResponse(
 	ctx context.Context,
 	session netmsg.Session,
 	filename string,
@@ -22,7 +21,7 @@ func HandelGetFileResponse(
 		return nil
 	}
 
-	if err := handleGetFileResponse(ctx, session, filename, res.Size); err != nil {
+	if err := downloadFile(ctx, session, filename, res.Size); err != nil {
 		return err
 	}
 
@@ -30,7 +29,7 @@ func HandelGetFileResponse(
 	return nil
 }
 
-func handleGetFileResponse(
+func downloadFile(
 	ctx context.Context,
 	session netmsg.Session,
 	filename string,
@@ -44,37 +43,21 @@ func handleGetFileResponse(
 	return session.StreamFromNet(ctx, file, fileSize)
 }
 
-func HandlePutFileResponse(ctx context.Context, res message.PutFileResponse) {
-	filename := filenameFromContext(ctx)
+func handlePutFileResponse(ctx context.Context, res message.PutFileResponse) {
+	filename := filenameFromContextOrPanic(ctx)
 	slog.Info("PUT file response:", "filename", filename, "status", res.Status)
 }
 
-func HandleDeleteFileResponse(ctx context.Context, res message.DeleteFileResponse) {
-	filename := filenameFromContext(ctx)
+func handleDeleteFileResponse(ctx context.Context, res message.DeleteFileResponse) {
+	filename := filenameFromContextOrPanic(ctx)
 	slog.Info("DELETE file response:", "filename", filename, "status", res.Status)
 }
 
-func HandleGetFilenamesResponse(ctx context.Context, res message.GetFilenamesResponse) {
-	pattern := patternFromContext(ctx)
+func handleGetFilenamesResponse(ctx context.Context, res message.GetFilenamesResponse) {
+	pattern := patternFromContextOrPanic(ctx)
 	if res.Status != http.StatusOK {
 		slog.Warn("GET filenames response:", "pattern", pattern, "status", res.Status)
 		return
 	}
 	slog.Info("GET filenames response:", "filenames", res.Filenames, "pattern", pattern, "status", res.Status)
-}
-
-func patternFromContext(ctx context.Context) string {
-	pattern, ok := ctxvalue.PatternFromContext(ctx)
-	if !ok {
-		panic("could not get pattern from context")
-	}
-	return pattern
-}
-
-func filenameFromContext(ctx context.Context) string {
-	filename, ok := ctxvalue.FilenameFromContext(ctx)
-	if !ok {
-		panic("could not get filename from context")
-	}
-	return filename
 }

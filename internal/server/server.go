@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/netmsg"
-	"github.com/mat-sik/file-server-go/internal/server/request"
 	"io"
 	"log/slog"
 	"net"
@@ -22,7 +21,7 @@ func Run(ctx context.Context, addr string) error {
 	return run(ctx, listener)
 }
 
-func runWithWaitGroup(ctx context.Context, wg *sync.WaitGroup, addr string) error {
+func RunWithWaitGroup(ctx context.Context, wg *sync.WaitGroup, addr string) error {
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return err
@@ -75,16 +74,16 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	session := netmsg.NewSession(conn)
 
 	fileService := files.NewService()
-	requestHandler := request.NewHandler(fileService)
+	requestHandler := newHandler(fileService)
 
-	handler := sessionHandler{
+	sh := sessionHandler{
 		Session: session,
-		Handler: requestHandler,
+		handler: requestHandler,
 	}
 
 	var err error
 	for err == nil {
-		err = handler.handleRequest(ctx)
+		err = sh.handleRequest(ctx)
 	}
 
 	errCh <- err
