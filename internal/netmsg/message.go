@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/mat-sik/file-server-go/internal/generated/netmsgpb"
 	"github.com/mat-sik/file-server-go/internal/message"
-	"github.com/mat-sik/file-server-go/internal/netmsg/header"
 	"google.golang.org/protobuf/proto"
 	"io"
 )
@@ -18,14 +17,14 @@ func sendMessage(msg message.Message, buffer []byte, writer io.Writer) error {
 	}
 
 	msgSize := uint32(len(msgBytes))
-	msgHeader := header.Header{
+	msgHeader := header{
 		PayloadSize: msgSize,
 	}
-	if err = header.EncodeHeader(msgHeader, buffer); err != nil {
+	if err = encodeHeader(msgHeader, buffer); err != nil {
 		return err
 	}
 
-	if _, err = writer.Write(buffer[:header.Size]); err != nil {
+	if _, err = writer.Write(buffer[:Size]); err != nil {
 		return err
 	}
 	if _, err = writer.Write(msgBytes); err != nil {
@@ -35,12 +34,12 @@ func sendMessage(msg message.Message, buffer []byte, writer io.Writer) error {
 }
 
 func receiveMessage(reader io.Reader, buffer []byte) (message.Message, error) {
-	limitedReader := io.LimitReader(reader, int64(header.Size))
+	limitedReader := io.LimitReader(reader, int64(Size))
 	if _, err := limitedReader.Read(buffer); err != nil {
 		return nil, err
 	}
 
-	msgHeader, err := header.DecodeHeader(buffer)
+	msgHeader, err := decodeHeader(buffer)
 	if err != nil {
 		return nil, err
 	}
