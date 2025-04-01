@@ -1,4 +1,4 @@
-package server
+package test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/mat-sik/file-server-go/internal/envs"
 	"github.com/mat-sik/file-server-go/internal/files"
 	"github.com/mat-sik/file-server-go/internal/message"
+	"github.com/mat-sik/file-server-go/internal/server"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -380,7 +381,7 @@ func runServerBlockTillListening() context.CancelFunc {
 func runServer(ctx context.Context, wg *sync.WaitGroup) {
 	addr := fmt.Sprintf(":%d", port)
 
-	if err := runWithWaitGroup(ctx, wg, addr); err != nil {
+	if err := server.RunWithWaitGroup(ctx, wg, addr); err != nil {
 		panic(err)
 	}
 }
