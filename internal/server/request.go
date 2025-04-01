@@ -1,4 +1,4 @@
-package request
+package server
 
 import (
 	"context"
@@ -11,18 +11,18 @@ import (
 	"regexp"
 )
 
-type Handler struct {
+type handler struct {
 	files.Service
 }
 
-func NewHandler(fileService files.Service) Handler {
-	return Handler{Service: fileService}
+func newHandler(fileService files.Service) handler {
+	return handler{Service: fileService}
 }
 
-func (h Handler) HandleGetFileRequest(req message.GetFileRequest) (GetFileResponse, error) {
+func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileResponse, error) {
 	fileHandle, ok := h.GetFile(req.Filename)
 	if !ok {
-		return GetFileResponse{
+		return getFileResponse{
 			GetFileResponse: message.GetFileResponse{
 				Status: http.StatusNotFound,
 				Size:   0,
@@ -32,23 +32,23 @@ func (h Handler) HandleGetFileRequest(req message.GetFileRequest) (GetFileRespon
 
 	readLockedFile, err := fileHandle.NewReadLockedFile()
 	if errors.Is(err, os.ErrNotExist) {
-		return GetFileResponse{
+		return getFileResponse{
 			GetFileResponse: message.GetFileResponse{
 				Status: http.StatusNotFound,
 				Size:   0,
 			},
 		}, nil
 	} else if err != nil {
-		return GetFileResponse{}, err
+		return getFileResponse{}, err
 	}
 
 	fileSize, err := files.SizeOf(readLockedFile.File)
 	if err != nil {
 		defer files.LoggedClose(&readLockedFile)
-		return GetFileResponse{}, err
+		return getFileResponse{}, err
 	}
 
-	return GetFileResponse{
+	return getFileResponse{
 		GetFileResponse: message.GetFileResponse{
 			Status: http.StatusOK,
 			Size:   fileSize,
@@ -57,12 +57,12 @@ func (h Handler) HandleGetFileRequest(req message.GetFileRequest) (GetFileRespon
 	}, nil
 }
 
-type GetFileResponse struct {
+type getFileResponse struct {
 	message.GetFileResponse
 	files.ReadLockedFile
 }
 
-func (h Handler) HandlePutFileRequest(
+func (h handler) handlePutFileRequest(
 	ctx context.Context,
 	session netmsg.Session,
 	req message.PutFileRequest,
@@ -87,7 +87,7 @@ func (h Handler) HandlePutFileRequest(
 	}, nil
 }
 
-func (h Handler) HandleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
+func (h handler) handleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
 	err := h.RemoveFile(req.Filename)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.DeleteFileResponse{
@@ -102,7 +102,7 @@ func (h Handler) HandleDeleteFileRequest(req message.DeleteFileRequest) (message
 	}, nil
 }
 
-func (h Handler) HandleGetFilenamesRequest(req message.GetFilenamesRequest) (message.GetFilenamesResponse, error) {
+func (h handler) handleGetFilenamesRequest(req message.GetFilenamesRequest) (message.GetFilenamesResponse, error) {
 	pattern, err := regexp.Compile(req.MatchRegex)
 	if err != nil {
 		return message.GetFilenamesResponse{
