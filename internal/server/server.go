@@ -77,7 +77,7 @@ func handleRequest(ctx context.Context, conn net.Conn, errCh chan<- error) {
 	requestHandler := newHandler(fileService)
 
 	sh := sessionHandler{
-		Session: session,
+		session: session,
 		handler: requestHandler,
 	}
 

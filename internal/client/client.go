@@ -20,7 +20,7 @@ func NewClient(addr string) (Client, error) {
 	session := netmsg.NewSession(conn)
 	return Client{
 		sessionHandler: sessionHandler{
-			Session: session,
+			session: session,
 		},
 	}, nil
 }

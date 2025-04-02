@@ -12,15 +12,15 @@ import (
 )
 
 type handler struct {
-	files.Service
+	syncService files.SyncService
 }
 
-func newHandler(fileService files.Service) handler {
-	return handler{Service: fileService}
+func newHandler(fileService files.SyncService) handler {
+	return handler{syncService: fileService}
 }
 
 func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileResponse, error) {
-	fileHandle, ok := h.GetFile(req.Filename)
+	fileHandle, ok := h.syncService.GetFile(req.Filename)
 	if !ok {
 		return getFileResponse{
 			GetFileResponse: message.GetFileResponse{
@@ -77,7 +77,7 @@ func (h handler) handlePutFileRequest(
 		return session.StreamFromNet(ctx, file, req.Size)
 	}
 
-	fileHandle := h.AddFile(req.Filename)
+	fileHandle := h.syncService.AddFile(req.Filename)
 	if err := fileHandle.ExecuteWriteOP(saveFileFromNet); err != nil {
 		return message.PutFileResponse{}, err
 	}
@@ -88,7 +88,7 @@ func (h handler) handlePutFileRequest(
 }
 
 func (h handler) handleDeleteFileRequest(req message.DeleteFileRequest) (message.DeleteFileResponse, error) {
-	err := h.RemoveFile(req.Filename)
+	err := h.syncService.RemoveFile(req.Filename)
 	if errors.Is(err, os.ErrNotExist) {
 		return message.DeleteFileResponse{
 			Status: http.StatusNotFound,
@@ -111,7 +111,7 @@ func (h handler) handleGetFilenamesRequest(req message.GetFilenamesRequest) (mes
 	}
 
 	var filteredFilenames []string
-	for _, filename := range h.GetAllFilenames() {
+	for _, filename := range h.syncService.GetAllFilenames() {
 		if pattern.MatchString(filename) {
 			filteredFilenames = append(filteredFilenames, filename)
 		}
