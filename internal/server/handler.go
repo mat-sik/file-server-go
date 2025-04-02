@@ -11,8 +11,8 @@ import (
 )
 
 type sessionHandler struct {
-	netmsg.Session
-	handler
+	session netmsg.Session
+	handler handler
 }
 
 func (sh sessionHandler) handleRequest(ctx context.Context) error {
@@ -30,7 +30,7 @@ func (sh sessionHandler) handleRequest(ctx context.Context) error {
 }
 
 func (sh sessionHandler) receiveRequest() (message.Request, error) {
-	msg, err := sh.ReceiveMessage()
+	msg, err := sh.session.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +48,13 @@ func (sh sessionHandler) routeRequest(ctx context.Context, req message.Request) 
 
 	switch req := req.(type) {
 	case message.GetFileRequest:
-		return sh.handleGetFileRequest(req)
+		return sh.handler.handleGetFileRequest(req)
 	case message.PutFileRequest:
-		return sh.handlePutFileRequest(ctx, sh.Session, req)
+		return sh.handler.handlePutFileRequest(ctx, sh.session, req)
 	case message.DeleteFileRequest:
-		return sh.handleDeleteFileRequest(req)
+		return sh.handler.handleDeleteFileRequest(req)
 	case message.GetFilenamesRequest:
-		return sh.handleGetFilenamesRequest(req)
+		return sh.handler.handleGetFilenamesRequest(req)
 	default:
 		return nil, errors.New("unexpected request type")
 	}
@@ -68,20 +68,20 @@ func (sh sessionHandler) deliverResponse(ctx context.Context, res message.Respon
 	case getFileResponse:
 		return sh.streamFileResponse(ctx, res)
 	default:
-		return sh.SendMessage(res)
+		return sh.session.SendMessage(res)
 	}
 }
 
 func (sh sessionHandler) streamFileResponse(ctx context.Context, res getFileResponse) error {
 	if res.Status != http.StatusOK {
-		return sh.SendMessage(res.GetFileResponse)
+		return sh.session.SendMessage(res.GetFileResponse)
 	}
 
 	defer files.LoggedClose(&res.ReadLockedFile)
-	if err := sh.SendMessage(res.GetFileResponse); err != nil {
+	if err := sh.session.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return sh.StreamToNet(ctx, res.ReadLockedFile, res.Size)
+	return sh.session.StreamToNet(ctx, res.ReadLockedFile, res.Size)
 }
 
 const timeForRequest = 5 * time.Second

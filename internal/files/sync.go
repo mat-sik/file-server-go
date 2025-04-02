@@ -6,18 +6,18 @@ import (
 	"sync"
 )
 
-type Service struct {
+type SyncService struct {
 	files *sync.Map
 }
 
-func (s *Service) AddFile(filename string) FileHandle {
+func (s *SyncService) AddFile(filename string) FileHandle {
 	path := buildServerFilePath(filename)
 	fileHandler := NewFileHandle(path)
 	s.files.Store(path, fileHandler)
 	return fileHandler
 }
 
-func (s *Service) GetFile(filename string) (FileHandle, bool) {
+func (s *SyncService) GetFile(filename string) (FileHandle, bool) {
 	path := buildServerFilePath(filename)
 	fileHandle, ok := s.files.Load(path)
 	if !ok {
@@ -26,7 +26,7 @@ func (s *Service) GetFile(filename string) (FileHandle, bool) {
 	return fileHandle.(FileHandle), true
 }
 
-func (s *Service) RemoveFile(filename string) error {
+func (s *SyncService) RemoveFile(filename string) error {
 	path := buildServerFilePath(filename)
 	value, ok := s.files.Load(path)
 	if !ok {
@@ -40,7 +40,7 @@ func (s *Service) RemoveFile(filename string) error {
 	return nil
 }
 
-func (s *Service) GetAllFilenames() []string {
+func (s *SyncService) GetAllFilenames() []string {
 	var filenames []string
 	s.files.Range(func(key, value interface{}) bool {
 		path := key.(string)
@@ -50,8 +50,8 @@ func (s *Service) GetAllFilenames() []string {
 	return filenames
 }
 
-func NewService() Service {
-	fileService := Service{
+func NewService() SyncService {
+	fileService := SyncService{
 		files: &sync.Map{},
 	}
 

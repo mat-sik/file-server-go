@@ -26,8 +26,8 @@ func Test_should_SendMessage_And_ReceiveIt(t *testing.T) {
 			readWriteCloser := &mockReadWriteCloser{Buffer: *bytes.NewBuffer(make([]byte, 0, 1024))}
 
 			session := Session{
-				Conn:   readWriteCloser,
-				Buffer: buffer,
+				conn:   readWriteCloser,
+				buffer: buffer,
 			}
 
 			if err := session.SendMessage(tc.message); err != nil {

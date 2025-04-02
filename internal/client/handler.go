@@ -11,7 +11,7 @@ import (
 )
 
 type sessionHandler struct {
-	netmsg.Session
+	session netmsg.Session
 }
 
 func (sh sessionHandler) handleRequest(ctx context.Context, req message.Request) (message.Response, error) {
@@ -51,7 +51,7 @@ func (sh sessionHandler) deliverRequest(ctx context.Context, req message.Request
 	case message.PutFileRequest:
 		return sh.streamRequest(ctx, req)
 	default:
-		return sh.SendMessage(req)
+		return sh.session.SendMessage(req)
 	}
 }
 
@@ -66,14 +66,14 @@ func (sh sessionHandler) streamRequest(ctx context.Context, req message.PutFileR
 	fileSize, err := files.SizeOf(file)
 	req.Size = fileSize
 
-	if err = sh.SendMessage(req); err != nil {
+	if err = sh.session.SendMessage(req); err != nil {
 		return err
 	}
-	return sh.StreamToNet(ctx, file, fileSize)
+	return sh.session.StreamToNet(ctx, file, fileSize)
 }
 
 func (sh sessionHandler) receiveResponse() (message.Response, error) {
-	msg, err := sh.ReceiveMessage()
+	msg, err := sh.session.ReceiveMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (sh sessionHandler) handleGetFileResponse(
 	res message.GetFileResponse,
 ) error {
 	filename := filenameFromContextOrPanic(ctx)
-	return handelGetFileResponse(ctx, sh.Session, filename, res)
+	return handelGetFileResponse(ctx, sh.session, filename, res)
 }
 
 const timeForRequest = 5 * time.Second

@@ -8,16 +8,16 @@ import (
 )
 
 type Session struct {
-	Conn   io.ReadWriteCloser
-	Buffer []byte
+	conn   io.ReadWriteCloser
+	buffer []byte
 }
 
 func (s Session) SendMessage(msg message.Message) error {
-	return sendMessage(msg, s.Buffer, s.Conn)
+	return sendMessage(msg, s.buffer, s.conn)
 }
 
 func (s Session) ReceiveMessage() (message.Message, error) {
-	return receiveMessage(s.Conn, s.Buffer)
+	return receiveMessage(s.conn, s.buffer)
 }
 
 func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer int) error {
@@ -25,7 +25,7 @@ func (s Session) StreamToNet(ctx context.Context, reader io.Reader, toTransfer i
 		return err
 	}
 	limitedReader := io.LimitReader(reader, int64(toTransfer))
-	_, err := io.CopyBuffer(s.Conn, limitedReader, s.Buffer)
+	_, err := io.CopyBuffer(s.conn, limitedReader, s.buffer)
 	return err
 }
 
@@ -33,16 +33,16 @@ func (s Session) StreamFromNet(ctx context.Context, writer io.Writer, toTransfer
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	limitedReader := io.LimitReader(s.Conn, int64(toTransfer))
-	_, err := io.CopyBuffer(writer, limitedReader, s.Buffer)
+	limitedReader := io.LimitReader(s.conn, int64(toTransfer))
+	_, err := io.CopyBuffer(writer, limitedReader, s.buffer)
 	return err
 }
 
 func NewSession(conn net.Conn) Session {
 	buffer := make([]byte, bufferSize)
 	return Session{
-		Conn:   conn,
-		Buffer: buffer,
+		conn:   conn,
+		buffer: buffer,
 	}
 }
 
