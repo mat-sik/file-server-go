@@ -87,27 +87,35 @@ func NewFileHandle(filename string) FileHandle {
 	}
 }
 
-func (fh FileHandle) NewReadLockedFile() (ReadLockedFile, error) {
+func (fh FileHandle) NewReadLockedFile() (*ReadLockedFile, error) {
 	fh.rwMutex.RLock()
 
 	file, err := os.Open(fh.filename)
 	if err != nil {
 		fh.rwMutex.RUnlock()
-		return ReadLockedFile{}, err
+		return nil, err
 	}
 
-	return ReadLockedFile{
+	return &ReadLockedFile{
 		rwMutex: fh.rwMutex,
-		File:    file,
+		file:    file,
 	}, nil
 }
 
 type ReadLockedFile struct {
 	rwMutex *sync.RWMutex
-	File    *os.File
+	file    *os.File
+}
+
+func (f *ReadLockedFile) Read(p []byte) (n int, err error) {
+	return f.file.Read(p)
+}
+
+func (f *ReadLockedFile) Size() (n int, err error) {
+	return SizeOf(f.file)
 }
 
 func (f *ReadLockedFile) Close() error {
 	defer f.rwMutex.RUnlock()
-	return f.File.Close()
+	return f.file.Close()
 }

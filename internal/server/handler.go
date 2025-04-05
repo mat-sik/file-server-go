@@ -77,11 +77,11 @@ func (sh sessionHandler) streamFileResponse(ctx context.Context, res getFileResp
 		return sh.session.SendMessage(res.GetFileResponse)
 	}
 
-	defer files.LoggedClose(&res.ReadLockedFile)
+	defer files.LoggedClose(res.ReadLockedFile)
 	if err := sh.session.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return sh.session.StreamToNet(ctx, res.ReadLockedFile.File, res.Size)
+	return sh.session.StreamToNet(ctx, res.ReadLockedFile, res.Size)
 }
 
 const timeForRequest = 5 * time.Second

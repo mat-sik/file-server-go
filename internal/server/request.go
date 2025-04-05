@@ -42,9 +42,9 @@ func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileRespon
 		return getFileResponse{}, err
 	}
 
-	fileSize, err := files.SizeOf(readLockedFile.File)
+	fileSize, err := readLockedFile.Size()
 	if err != nil {
-		files.LoggedClose(&readLockedFile)
+		files.LoggedClose(readLockedFile)
 		return getFileResponse{}, err
 	}
 
@@ -59,7 +59,7 @@ func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileRespon
 
 type getFileResponse struct {
 	message.GetFileResponse
-	ReadLockedFile files.ReadLockedFile
+	ReadLockedFile *files.ReadLockedFile
 }
 
 func (h handler) handlePutFileRequest(

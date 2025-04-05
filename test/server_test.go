@@ -197,11 +197,11 @@ func Test_shouldPassRaceConditionTest(t *testing.T) {
 }
 
 func runRequest(wg *sync.WaitGroup, execRequest func(webClient client.Client) error) {
+	defer wg.Done()
 	webClient := getClient()
 	if err := execRequest(webClient); err != nil {
 		panic(err)
 	}
-	wg.Done()
 }
 
 func Test_shouldGetFileFromServerDeleteItOnServerAndPutItToServerUsingTheSameConnection(t *testing.T) {
