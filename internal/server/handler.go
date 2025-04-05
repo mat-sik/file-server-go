@@ -81,7 +81,7 @@ func (sh sessionHandler) streamFileResponse(ctx context.Context, res getFileResp
 	if err := sh.session.SendMessage(res.GetFileResponse); err != nil {
 		return err
 	}
-	return sh.session.StreamToNet(ctx, res.ReadLockedFile, res.Size)
+	return sh.session.StreamToNet(ctx, res.ReadLockedFile.File, res.Size)
 }
 
 const timeForRequest = 5 * time.Second

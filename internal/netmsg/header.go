@@ -6,26 +6,26 @@ import (
 )
 
 type header struct {
-	PayloadSize uint32
+	payloadSize uint32
 }
 
 func encodeHeader(header header, buffer []byte) error {
 	if err := validateHeaderBufferSize(buffer, uint32ByteSize); err != nil {
 		return err
 	}
-	binary.BigEndian.PutUint32(buffer, header.PayloadSize)
+	binary.BigEndian.PutUint32(buffer, header.payloadSize)
 	return nil
 }
 
 func decodeHeader(buffer []byte) (header, error) {
-	if len(buffer) < Size {
+	if len(buffer) < headerSize {
 		return header{}, errors.New("buffer has not enough bytes to decode header")
 	}
 	uint32ByteSlice := buffer[:uint32ByteSize]
 	payloadSize := binary.BigEndian.Uint32(uint32ByteSlice)
 
 	return header{
-		PayloadSize: payloadSize,
+		payloadSize: payloadSize,
 	}, nil
 }
 
@@ -38,5 +38,5 @@ func validateHeaderBufferSize(headerBuffer []byte, size int) error {
 
 const (
 	uint32ByteSize = 4
-	Size           = uint32ByteSize
+	headerSize     = uint32ByteSize
 )

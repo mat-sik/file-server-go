@@ -59,7 +59,7 @@ func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileRespon
 
 type getFileResponse struct {
 	message.GetFileResponse
-	files.ReadLockedFile
+	ReadLockedFile files.ReadLockedFile
 }
 
 func (h handler) handlePutFileRequest(

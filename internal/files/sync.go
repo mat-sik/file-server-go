@@ -64,50 +64,50 @@ func NewService() SyncService {
 }
 
 type FileHandle struct {
-	*sync.RWMutex
+	rwMutex  *sync.RWMutex
 	filename string
 }
 
 func (fh FileHandle) ExecuteReadOP(readOP func(string) error) error {
-	fh.RLock()
-	defer fh.RUnlock()
+	fh.rwMutex.RLock()
+	defer fh.rwMutex.RUnlock()
 	return readOP(fh.filename)
 }
 
 func (fh FileHandle) ExecuteWriteOP(writeOP func(string) error) error {
-	fh.Lock()
-	defer fh.Unlock()
+	fh.rwMutex.Lock()
+	defer fh.rwMutex.Unlock()
 	return writeOP(fh.filename)
 }
 
 func NewFileHandle(filename string) FileHandle {
 	return FileHandle{
 		filename: filename,
-		RWMutex:  &sync.RWMutex{},
+		rwMutex:  &sync.RWMutex{},
 	}
 }
 
 func (fh FileHandle) NewReadLockedFile() (ReadLockedFile, error) {
-	fh.RLock()
+	fh.rwMutex.RLock()
 
 	file, err := os.Open(fh.filename)
 	if err != nil {
-		fh.RUnlock()
+		fh.rwMutex.RUnlock()
 		return ReadLockedFile{}, err
 	}
 
 	return ReadLockedFile{
-		RWMutex: fh.RWMutex,
+		rwMutex: fh.rwMutex,
 		File:    file,
 	}, nil
 }
 
 type ReadLockedFile struct {
-	*sync.RWMutex
-	*os.File
+	rwMutex *sync.RWMutex
+	File    *os.File
 }
 
 func (f *ReadLockedFile) Close() error {
-	defer f.RUnlock()
+	defer f.rwMutex.RUnlock()
 	return f.File.Close()
 }
