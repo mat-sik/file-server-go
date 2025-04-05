@@ -44,7 +44,7 @@ func (h handler) handleGetFileRequest(req message.GetFileRequest) (getFileRespon
 
 	fileSize, err := files.SizeOf(readLockedFile.File)
 	if err != nil {
-		defer files.LoggedClose(&readLockedFile)
+		files.LoggedClose(&readLockedFile)
 		return getFileResponse{}, err
 	}
 
