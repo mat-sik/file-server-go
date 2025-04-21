@@ -7,23 +7,23 @@ import (
 )
 
 type SyncService struct {
-	files *sync.Map
+	files sync.Map
 }
 
-func (s *SyncService) AddFile(filename string) FileHandle {
+func (s *SyncService) AddFile(filename string) *FileHandle {
 	path := buildServerFilePath(filename)
 	fileHandler := NewFileHandle(path)
 	s.files.Store(path, fileHandler)
 	return fileHandler
 }
 
-func (s *SyncService) GetFile(filename string) (FileHandle, bool) {
+func (s *SyncService) GetFile(filename string) (*FileHandle, bool) {
 	path := buildServerFilePath(filename)
 	fileHandle, ok := s.files.Load(path)
 	if !ok {
-		return FileHandle{}, false
+		return nil, false
 	}
-	return fileHandle.(FileHandle), true
+	return fileHandle.(*FileHandle), true
 }
 
 func (s *SyncService) RemoveFile(filename string) error {
@@ -32,7 +32,7 @@ func (s *SyncService) RemoveFile(filename string) error {
 	if !ok {
 		return os.ErrNotExist
 	}
-	fileHandle := value.(FileHandle)
+	fileHandle := value.(*FileHandle)
 	if err := fileHandle.ExecuteWriteOP(os.Remove); err != nil {
 		return err
 	}
@@ -50,9 +50,9 @@ func (s *SyncService) GetAllFilenames() []string {
 	return filenames
 }
 
-func NewService() SyncService {
+func NewService() *SyncService {
 	fileService := SyncService{
-		files: &sync.Map{},
+		files: sync.Map{},
 	}
 
 	filenames := getServerStoredFilenames()
@@ -60,34 +60,34 @@ func NewService() SyncService {
 		fileService.AddFile(filename)
 	}
 
-	return fileService
+	return &fileService
 }
 
 type FileHandle struct {
-	rwMutex  *sync.RWMutex
+	rwMutex  sync.RWMutex
 	filename string
 }
 
-func (fh FileHandle) ExecuteReadOP(readOP func(string) error) error {
+func (fh *FileHandle) ExecuteReadOP(readOP func(string) error) error {
 	fh.rwMutex.RLock()
 	defer fh.rwMutex.RUnlock()
 	return readOP(fh.filename)
 }
 
-func (fh FileHandle) ExecuteWriteOP(writeOP func(string) error) error {
+func (fh *FileHandle) ExecuteWriteOP(writeOP func(string) error) error {
 	fh.rwMutex.Lock()
 	defer fh.rwMutex.Unlock()
 	return writeOP(fh.filename)
 }
 
-func NewFileHandle(filename string) FileHandle {
-	return FileHandle{
+func NewFileHandle(filename string) *FileHandle {
+	return &FileHandle{
 		filename: filename,
-		rwMutex:  &sync.RWMutex{},
+		rwMutex:  sync.RWMutex{},
 	}
 }
 
-func (fh FileHandle) NewReadLockedFile() (*ReadLockedFile, error) {
+func (fh *FileHandle) NewReadLockedFile() (*ReadLockedFile, error) {
 	fh.rwMutex.RLock()
 
 	file, err := os.Open(fh.filename)
@@ -97,7 +97,7 @@ func (fh FileHandle) NewReadLockedFile() (*ReadLockedFile, error) {
 	}
 
 	return &ReadLockedFile{
-		rwMutex: fh.rwMutex,
+		rwMutex: &fh.rwMutex,
 		file:    file,
 	}, nil
 }
