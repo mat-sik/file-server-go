@@ -12,10 +12,10 @@ import (
 )
 
 type handler struct {
-	syncService files.SyncService
+	syncService *files.SyncService
 }
 
-func newHandler(fileService files.SyncService) handler {
+func newHandler(fileService *files.SyncService) handler {
 	return handler{syncService: fileService}
 }
 
